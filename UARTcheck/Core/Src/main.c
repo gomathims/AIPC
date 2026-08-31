@@ -229,7 +229,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 
 			for (uint16_t i = 0; i < Size; i++)
 			{
-		    	printf("%02X ", Uart3RXbuffer[i]);
+		    	printf("the value %02X ", Uart3RXbuffer[i]);
 			}
 			printf("Coming inside\r\n");
 			NTPsyncTimeToRTC(Size);
