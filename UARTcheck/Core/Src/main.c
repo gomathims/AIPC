@@ -189,11 +189,11 @@ void UARTcollection(uint16_t Size) {
 }
 
 void NTPsyncTimeToRTC(uint16_t Size){
-	printf("Time Synced process is in testing mode\r\n");
-	for (int i = 0; i < 10; i++) {
-		printf("%d ---->%X\r\n", i, Uart3RXbuffer[i]);
-	}
-	printf("\r\n");
+//	printf("Time Synced process is in testing mode\r\n");
+//	for (int i = 0; i < 10; i++) {
+//		printf("%d ---->%X\r\n", i, Uart3RXbuffer[i]);
+//	}
+//	printf("\r\n");
 
 	uint16_t i;
 	for (i = 0; i < Size/*-i>=10*/; i++) {
