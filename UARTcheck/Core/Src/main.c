@@ -208,7 +208,7 @@ void NTPsyncTimeToRTC(uint16_t Size){
 			    ((uint64_t)Uart3RXbuffer[i+7] << 48) |
 			    ((uint64_t)Uart3RXbuffer[i+8] << 56);
 			timeSynced =true;
-//			printf("%lu\r\n",(unsigned long)receivedUnixTime);
+			printf("%lu\r\n",(unsigned long)receivedUnixTime);
 			return;
 		}
 	}
