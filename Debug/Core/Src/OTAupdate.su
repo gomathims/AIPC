@@ -1,0 +1,14 @@
+../Core/Src/OTAupdate.c:30:6:suBusy	4	static
+../Core/Src/OTAupdate.c:35:13:containsSeq	32	static
+../Core/Src/OTAupdate.c:43:6:suOnRxBurst	16	static
+../Core/Src/OTAupdate.c:53:13:suTx	16	static
+../Core/Src/OTAupdate.c:63:13:suRxStart	8	static
+../Core/Src/OTAupdate.c:72:13:suRxStopRestoreIdle	8	static
+../Core/Src/OTAupdate.c:82:17:suRxHead	4	static
+../Core/Src/OTAupdate.c:87:13:suRxRead	40	static
+../Core/Src/OTAupdate.c:111:13:suRunningFromBank2	4	static
+../Core/Src/OTAupdate.c:114:17:suInactiveBankId	8	static
+../Core/Src/OTAupdate.c:120:13:suEraseInactive	32	static
+../Core/Src/OTAupdate.c:138:13:suReceiveImage	64	static
+../Core/Src/OTAupdate.c:179:13:suApply	64	static
+../Core/Src/OTAupdate.c:200:6:suService	16	static
