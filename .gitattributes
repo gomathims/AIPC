@@ -1,0 +1,10 @@
+# Normalise line endings: store LF in the repo, use the OS default in the working copy
+* text=auto
+
+# Keep binaries untouched
+*.bin  binary
+*.elf  binary
+*.hex  binary
+*.png  binary
+*.jpg  binary
+*.pdf  binary
