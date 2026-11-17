@@ -8,12 +8,30 @@
 #include "Relay_controlling.h"
 #include "main.h"
 
-void RmainRelayTurnON() {
-	if (!RmainRelayState) {
-		while (!RmainRelayState) {
+void rMainRelayTurnOn() {
+	if (!rMainRelayState) {
+		while (!rMainRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t rMainOnTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+					if ((HAL_GetTick() - rMainOnTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin))) {
+					if ((HAL_GetTick() - rMainOnTime) >= 20) {
+						break;
+					}
+
+				}
+			}
+
 			HAL_GPIO_WritePin(R_main_sig_GPIO_Port, R_main_sig_Pin, GPIO_PIN_SET);
-			RmainRelayState = HAL_GPIO_ReadPin(R_main_sig_GPIO_Port, R_main_sig_Pin);
+			rMainRelayState = HAL_GPIO_ReadPin(R_main_sig_GPIO_Port, R_main_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | 1);
@@ -22,12 +40,30 @@ void RmainRelayTurnON() {
 	return;
 }
 
-void YmainRelayTurnON() {
-	if (!YmainRelayState) {
-		while (!YmainRelayState) {
+void yMainRelayTurnOn() {
+	if (!yMainRelayState) {
+		while (!yMainRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t yMainOnTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+					if ((HAL_GetTick() - yMainOnTime) >= 20) {
+						break;
+					}
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin))) {
+					if ((HAL_GetTick() - yMainOnTime) >= 20) {
+						break;
+					}
+
+				}
+			}
+
+
 			HAL_GPIO_WritePin(Y_main_sig_GPIO_Port, Y_main_sig_Pin, GPIO_PIN_SET);
-			YmainRelayState = HAL_GPIO_ReadPin(Y_main_sig_GPIO_Port, Y_main_sig_Pin);
+			yMainRelayState = HAL_GPIO_ReadPin(Y_main_sig_GPIO_Port, Y_main_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<1));
@@ -37,12 +73,29 @@ void YmainRelayTurnON() {
 
 }
 
-void BmainRelayTurnON() {
-	if (!BmainRelayState) {
-		while (!BmainRelayState) {
+void bMainRelayTurnOn() {
+	if (!bMainRelayState) {
+		while (!bMainRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t bMainOnTime=HAL_GetTick();
+			if (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+					if((HAL_GetTick() - bMainOnTime) >=20){
+						break;
+					}
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin))) {
+					if ((HAL_GetTick() - bMainOnTime) >= 20) {
+						break;
+					}
+
+				}
+			}
+
 			HAL_GPIO_WritePin(B_main_sig_GPIO_Port, B_main_sig_Pin, GPIO_PIN_SET);
-			BmainRelayState = HAL_GPIO_ReadPin(B_main_sig_GPIO_Port, B_main_sig_Pin);
+			bMainRelayState = HAL_GPIO_ReadPin(B_main_sig_GPIO_Port, B_main_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<2));
@@ -52,12 +105,30 @@ void BmainRelayTurnON() {
 
 }
 
-void RYauxRelayTurnON() {
-	if (!RYauxRelayState) {
-		while (!RYauxRelayState) {
+void ryAuxRelayTurnOn() {
+	if (!ryAuxRelayState) {
+		while (!ryAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t ryAuxOnTime =HAL_GetTick();
+			if (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+					if ((HAL_GetTick() - ryAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin))) {
+					if ((HAL_GetTick() - ryAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			}
+
 			HAL_GPIO_WritePin(R_AUX1_sig_GPIO_Port,R_AUX1_sig_Pin, GPIO_PIN_SET);
-			RYauxRelayState = HAL_GPIO_ReadPin(R_AUX1_sig_GPIO_Port,R_AUX1_sig_Pin);
+			ryAuxRelayState = HAL_GPIO_ReadPin(R_AUX1_sig_GPIO_Port,R_AUX1_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<5));
@@ -67,12 +138,30 @@ void RYauxRelayTurnON() {
 
 }
 
-void RBauxRelayTurnON() {
-	if (!RBauxRelayState) {
-		while (!RBauxRelayState) {
+void rbAuxRelayTurnOn() {
+	if (!rbAuxRelayState) {
+		while (!rbAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t rbAuxOnTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+					if ((HAL_GetTick() - rbAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin))) {
+					if ((HAL_GetTick() - rbAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			}
+
 			HAL_GPIO_WritePin(R_AUX2_sig_GPIO_Port, R_AUX2_sig_Pin, GPIO_PIN_SET);
-			RBauxRelayState = HAL_GPIO_ReadPin(R_AUX2_sig_GPIO_Port, R_AUX2_sig_Pin);
+			rbAuxRelayState = HAL_GPIO_ReadPin(R_AUX2_sig_GPIO_Port, R_AUX2_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<7));
@@ -82,12 +171,29 @@ void RBauxRelayTurnON() {
 
 }
 
-void YRauxRelayTurnON() {
-	if (!YRauxRelayState) {
-		while (!YRauxRelayState) {
+void yrAuxRelayTurnOn() {
+	if (!yrAuxRelayState) {
+		while (!yrAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t yrAuxOnTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+					if ((HAL_GetTick() - yrAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin))) {
+					if ((HAL_GetTick() - yrAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			}
 			HAL_GPIO_WritePin(Y_AUX1_sig_GPIO_Port, Y_AUX1_sig_Pin, GPIO_PIN_SET);
-			YRauxRelayState = HAL_GPIO_ReadPin(Y_AUX1_sig_GPIO_Port, Y_AUX1_sig_Pin);
+			yrAuxRelayState = HAL_GPIO_ReadPin(Y_AUX1_sig_GPIO_Port, Y_AUX1_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<3));
@@ -97,12 +203,30 @@ void YRauxRelayTurnON() {
 
 }
 
-void YBauxRelayTurnON() {
-	if (!YBauxRelayState) {
-		while (!YBauxRelayState) {
+void ybAuxRelayTurnOn() {
+	if (!ybAuxRelayState) {
+		while (!ybAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t ybAuxOnTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+					if ((HAL_GetTick() - ybAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin))) {
+					if ((HAL_GetTick() - ybAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			}
+
 			HAL_GPIO_WritePin(Y_AUX2_sig_GPIO_Port, Y_AUX2_sig_Pin, GPIO_PIN_SET);
-			YBauxRelayState = HAL_GPIO_ReadPin(Y_AUX2_sig_GPIO_Port, Y_AUX2_sig_Pin);
+			ybAuxRelayState = HAL_GPIO_ReadPin(Y_AUX2_sig_GPIO_Port, Y_AUX2_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<8));
@@ -113,12 +237,30 @@ void YBauxRelayTurnON() {
 
 }
 
-void BYauxRelayTurnON() {
-	if (!BYauxRelayState) {
-		while (!BYauxRelayState) {
+void byAuxRelayTurnOn() {
+	if (!byAuxRelayState) {
+		while (!byAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t byAuxOnTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+					if ((HAL_GetTick() - byAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin))) {
+					if ((HAL_GetTick() - byAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			}
+
 			HAL_GPIO_WritePin(B_AUX1_sig_GPIO_Port, B_AUX1_sig_Pin, GPIO_PIN_SET);
-			BYauxRelayState = HAL_GPIO_ReadPin(B_AUX1_sig_GPIO_Port, B_AUX1_sig_Pin);
+			byAuxRelayState = HAL_GPIO_ReadPin(B_AUX1_sig_GPIO_Port, B_AUX1_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<6));
@@ -128,12 +270,29 @@ void BYauxRelayTurnON() {
 
 }
 
-void BRauxRelayTurnON() {
-	if (!BRauxRelayState) {
-		while (!BRauxRelayState) {
+void brAuxRelayTurnOn() {
+	if (!brAuxRelayState) {
+		while (!brAuxRelayState) {
 			/*to do :Implement the zero crossing switching technique*/
+
+			uint32_t brAuxOnTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+					if ((HAL_GetTick() - brAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin))) {
+					if ((HAL_GetTick() - brAuxOnTime) >= 20) {
+						break;
+					}
+
+				}
+			}
 			HAL_GPIO_WritePin(B_AUX2_sig_GPIO_Port, B_AUX2_sig_Pin, GPIO_PIN_SET);
-			BRauxRelayState = HAL_GPIO_ReadPin(B_AUX2_sig_GPIO_Port, B_AUX2_sig_Pin);
+			brAuxRelayState = HAL_GPIO_ReadPin(B_AUX2_sig_GPIO_Port, B_AUX2_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<4));
@@ -143,14 +302,33 @@ void BRauxRelayTurnON() {
 
 }
 
-void UPSmainRelayON(){
-	if(!UPSmainRelayState) {
-		while(!UPSmainRelayState){
+void upsMainRelayOn(){
+	if(!upsMainRelayState) {
+		while(!upsMainRelayState){
 		/*to do :Implement the zero crossing switching technique*/
-		HAL_GPIO_WritePin(UPS_main_sig_GPIO_Port, UPS_main_sig_Pin, GPIO_PIN_SET);
-		UPSmainRelayState = HAL_GPIO_ReadPin(UPS_main_sig_GPIO_Port, UPS_main_sig_Pin);
 
-		//to do : Implement the log for ups task.
+			uint32_t upsMainOnTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(UPS_ZX_GPIO_Port, UPS_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(UPS_ZX_GPIO_Port, UPS_ZX_Pin)) {
+					if ((HAL_GetTick() - upsMainOnTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(UPS_ZX_GPIO_Port, UPS_ZX_Pin))) {
+					if ((HAL_GetTick() - upsMainOnTime) >= 20) {
+						break;
+					}
+
+				}
+			}
+
+		HAL_GPIO_WritePin(UPS_main_sig_GPIO_Port, UPS_main_sig_Pin, GPIO_PIN_SET);
+		upsMainRelayState = HAL_GPIO_ReadPin(UPS_main_sig_GPIO_Port, UPS_main_sig_Pin);
+
+		//This is event noting to manage the logs
+		eventFlag = (eventFlag | (1<<9));
 		}
 
 
@@ -159,14 +337,15 @@ void UPSmainRelayON(){
 
 }
 
-void UPSauxRelayON(){
-	if(!UPSauxRelayState) {
-		while(!UPSauxRelayState){
+void upsAuxRelayOn(){
+	if(!upsAuxRelayState) {
+		while(!upsAuxRelayState){
 		/*to do :Implement the zero crossing switching technique*/
 		HAL_GPIO_WritePin(UPS_AUX_sig_GPIO_Port, UPS_AUX_sig_Pin, GPIO_PIN_SET);
-		UPSauxRelayState = HAL_GPIO_ReadPin(UPS_AUX_sig_GPIO_Port, UPS_AUX_sig_Pin);
+		upsAuxRelayState = HAL_GPIO_ReadPin(UPS_AUX_sig_GPIO_Port, UPS_AUX_sig_Pin);
 
-		//to do : Implement the log for ups task.
+		//This is event noting to manage the logs
+		eventFlag = (eventFlag | (1<<10));
 		}
 
 
@@ -175,14 +354,30 @@ void UPSauxRelayON(){
 
 }
 
-void RmainRelayTurnOFF() {
-	RYauxRelayTurnOFF();
-	RBauxRelayTurnOFF();
-	if (RmainRelayState) {
-		while (RmainRelayState) {
+void rMainRelayTurnOff() {
+	ryAuxRelayTurnOff();
+	rbAuxRelayTurnOff();
+	if (rMainRelayState) {
+		while (rMainRelayState) {
 			/*Implement the zero crossing switching technique*/
+			uint32_t rMainOffTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+					if ((HAL_GetTick() - rMainOffTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin))) {
+					if ((HAL_GetTick() - rMainOffTime) >= 20) {
+						break;
+					}
+
+				}
+			}
 			HAL_GPIO_WritePin(R_main_sig_GPIO_Port, R_main_sig_Pin, GPIO_PIN_RESET);
-			RmainRelayState = HAL_GPIO_ReadPin(R_main_sig_GPIO_Port, R_main_sig_Pin);
+			rMainRelayState = HAL_GPIO_ReadPin(R_main_sig_GPIO_Port, R_main_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~1));
@@ -192,14 +387,31 @@ void RmainRelayTurnOFF() {
 
 }
 
-void YmainRelayTurnOFF() {
-	YRauxRelayTurnOFF();
-	YBauxRelayTurnOFF();
-	if (YmainRelayState) {
-		while (YmainRelayState) {
+void yMainRelayTurnOff() {
+	yrAuxRelayTurnOff();
+	ybAuxRelayTurnOff();
+	if (yMainRelayState) {
+		while (yMainRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t yMainOffTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+					if ((HAL_GetTick() - yMainOffTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin))) {
+					if ((HAL_GetTick() - yMainOffTime) >= 20) {
+						break;
+					}
+
+				}
+			}
 			HAL_GPIO_WritePin(Y_main_sig_GPIO_Port, Y_main_sig_Pin, GPIO_PIN_RESET);
-			YmainRelayState = HAL_GPIO_ReadPin(Y_main_sig_GPIO_Port, Y_main_sig_Pin);
+			yMainRelayState = HAL_GPIO_ReadPin(Y_main_sig_GPIO_Port, Y_main_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<1)));
@@ -209,14 +421,31 @@ void YmainRelayTurnOFF() {
 
 }
 
-void BmainRelayTurnOFF() {
-	BRauxRelayTurnOFF();
-	BYauxRelayTurnOFF();
-	if (BmainRelayState) {
-		while (BmainRelayState) {
+void bMainRelayTurnOff() {
+	brAuxRelayTurnOff();
+	byAuxRelayTurnOff();
+	if (bMainRelayState) {
+		while (bMainRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t bMainOffTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+					if ((HAL_GetTick() - bMainOffTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin))) {
+					if ((HAL_GetTick() - bMainOffTime) >= 20) {
+						break;
+					}
+
+				}
+			}
 			HAL_GPIO_WritePin(B_main_sig_GPIO_Port, B_main_sig_Pin, GPIO_PIN_RESET);
-			BmainRelayState = HAL_GPIO_ReadPin(B_main_sig_GPIO_Port, B_main_sig_Pin);
+			bMainRelayState = HAL_GPIO_ReadPin(B_main_sig_GPIO_Port, B_main_sig_Pin);
 
 
 			//This is event noting to manage the logs
@@ -227,12 +456,29 @@ void BmainRelayTurnOFF() {
 
 }
 
-void RYauxRelayTurnOFF() {
-	if (RYauxRelayState) {
-		while (RYauxRelayState) {
+void ryAuxRelayTurnOff() {
+	if (ryAuxRelayState) {
+		while (ryAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t ryAuxOffTime = HAL_GetTick();
+						if (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+							while (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+								if ((HAL_GetTick() - ryAuxOffTime) >= 20) {
+									break;
+								}
+
+							}
+						} else {
+							while (!(HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin))) {
+								if ((HAL_GetTick() - ryAuxOffTime) >= 20) {
+									break;
+								}
+
+							}
+						}
 			HAL_GPIO_WritePin(R_AUX1_sig_GPIO_Port,R_AUX1_sig_Pin, GPIO_PIN_RESET);
-			RYauxRelayState = HAL_GPIO_ReadPin(R_AUX1_sig_GPIO_Port,R_AUX1_sig_Pin);
+			ryAuxRelayState = HAL_GPIO_ReadPin(R_AUX1_sig_GPIO_Port,R_AUX1_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<5)));
@@ -242,12 +488,29 @@ void RYauxRelayTurnOFF() {
 
 }
 
-void RBauxRelayTurnOFF() {
-	if (RBauxRelayState) {
-		while (RBauxRelayState) {
+void rbAuxRelayTurnOff() {
+	if (rbAuxRelayState) {
+		while (rbAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t rbAuxOffTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin)) {
+					if ((HAL_GetTick() - rbAuxOffTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(R_ZX_GPIO_Port, R_ZX_Pin))) {
+					if ((HAL_GetTick() - rbAuxOffTime) >= 20) {
+						break;
+					}
+
+				}
+			}
 			HAL_GPIO_WritePin(R_AUX2_sig_GPIO_Port,R_AUX2_sig_Pin, GPIO_PIN_RESET);
-			RBauxRelayState = HAL_GPIO_ReadPin(R_AUX2_sig_GPIO_Port,R_AUX2_sig_Pin);
+			rbAuxRelayState = HAL_GPIO_ReadPin(R_AUX2_sig_GPIO_Port,R_AUX2_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<7)));
@@ -257,12 +520,29 @@ void RBauxRelayTurnOFF() {
 
 }
 
-void YRauxRelayTurnOFF() {
-	if (YRauxRelayState) {
-		while (YRauxRelayState) {
+void yrAuxRelayTurnOff() {
+	if (yrAuxRelayState) {
+		while (yrAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t yrAuxOffTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+					if ((HAL_GetTick() - yrAuxOffTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin))) {
+					if ((HAL_GetTick() - yrAuxOffTime) >= 20) {
+						break;
+					}
+
+				}
+			}
 			HAL_GPIO_WritePin(Y_AUX1_sig_GPIO_Port,Y_AUX1_sig_Pin, GPIO_PIN_RESET);
-			YRauxRelayState = HAL_GPIO_ReadPin(Y_AUX1_sig_GPIO_Port,Y_AUX1_sig_Pin);
+			yrAuxRelayState = HAL_GPIO_ReadPin(Y_AUX1_sig_GPIO_Port,Y_AUX1_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<3)));
@@ -272,12 +552,29 @@ void YRauxRelayTurnOFF() {
 
 }
 
-void YBauxRelayTurnOFF() {
-	if (YBauxRelayState) {
-		while (YBauxRelayState) {
+void ybAuxRelayTurnOff() {
+	if (ybAuxRelayState) {
+		while (ybAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+
+			uint32_t ybAuxOffTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin)) {
+					if ((HAL_GetTick() - ybAuxOffTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(Y_ZX_GPIO_Port, Y_ZX_Pin))) {
+					if ((HAL_GetTick() - ybAuxOffTime) >= 20) {
+						break;
+					}
+
+				}
+			}
 			HAL_GPIO_WritePin(Y_AUX2_sig_GPIO_Port,Y_AUX2_sig_Pin, GPIO_PIN_RESET);
-			YBauxRelayState = HAL_GPIO_ReadPin(Y_AUX2_sig_GPIO_Port,Y_AUX2_sig_Pin);
+			ybAuxRelayState = HAL_GPIO_ReadPin(Y_AUX2_sig_GPIO_Port,Y_AUX2_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<8)));
@@ -287,12 +584,28 @@ void YBauxRelayTurnOFF() {
 
 }
 
-void BYauxRelayTurnOFF() {
-	if (BYauxRelayState) {
-		while (BYauxRelayState) {
+void byAuxRelayTurnOff() {
+	if (byAuxRelayState) {
+		while (byAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+			uint32_t byAuxOffTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+					if ((HAL_GetTick() - byAuxOffTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin))) {
+					if ((HAL_GetTick() - byAuxOffTime) >= 20) {
+						break;
+					}
+
+				}
+			}
 			HAL_GPIO_WritePin(B_AUX1_sig_GPIO_Port,B_AUX1_sig_Pin, GPIO_PIN_RESET);
-			BYauxRelayState = HAL_GPIO_ReadPin(B_AUX1_sig_GPIO_Port,B_AUX1_sig_Pin);
+			byAuxRelayState = HAL_GPIO_ReadPin(B_AUX1_sig_GPIO_Port,B_AUX1_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<6)));
@@ -302,12 +615,28 @@ void BYauxRelayTurnOFF() {
 
 }
 
-void BRauxRelayTurnOFF() {
-	if (BRauxRelayState) {
-		while (BRauxRelayState) {
+void brAuxRelayTurnOff() {
+	if (brAuxRelayState) {
+		while (brAuxRelayState) {
 			/*Implement the zero crossing switching technique*/
+			uint32_t brAuxOffTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin)) {
+					if ((HAL_GetTick() - brAuxOffTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(B_ZX_GPIO_Port, B_ZX_Pin))) {
+					if ((HAL_GetTick() - brAuxOffTime) >= 20) {
+						break;
+					}
+
+				}
+			}
 			HAL_GPIO_WritePin(B_AUX2_sig_GPIO_Port,B_AUX2_sig_Pin, GPIO_PIN_RESET);
-			BRauxRelayState = HAL_GPIO_ReadPin(B_AUX2_sig_GPIO_Port,B_AUX2_sig_Pin);
+			brAuxRelayState = HAL_GPIO_ReadPin(B_AUX2_sig_GPIO_Port,B_AUX2_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<4)));
@@ -317,28 +646,47 @@ void BRauxRelayTurnOFF() {
 
 }
 
-void  UPSmainRelayOFF(){
-	if(UPSmainRelayState){
-		while (UPSmainRelayState){
+void  upsMainRelayOff(){
+	if(upsMainRelayState){
+		while (upsMainRelayState){
 			/*to do : Implement the zero crossing switching technique*/
-			HAL_GPIO_WritePin(UPS_main_sig_GPIO_Port, UPS_main_sig_Pin, GPIO_PIN_RESET);
-			UPSmainRelayState = HAL_GPIO_ReadPin(UPS_main_sig_GPIO_Port, UPS_main_sig_Pin);
 
-			//to do : Implement the log for ups task.
+			uint32_t upsMainOffTime = HAL_GetTick();
+			if (HAL_GPIO_ReadPin(UPS_ZX_GPIO_Port, UPS_ZX_Pin)) {
+				while (HAL_GPIO_ReadPin(UPS_ZX_GPIO_Port, UPS_ZX_Pin)) {
+					if ((HAL_GetTick() - upsMainOffTime) >= 20) {
+						break;
+					}
+
+				}
+			} else {
+				while (!(HAL_GPIO_ReadPin(UPS_ZX_GPIO_Port, UPS_ZX_Pin))) {
+					if ((HAL_GetTick() - upsMainOffTime) >= 20) {
+						break;
+					}
+
+				}
+			}
+			HAL_GPIO_WritePin(UPS_main_sig_GPIO_Port, UPS_main_sig_Pin, GPIO_PIN_RESET);
+			upsMainRelayState = HAL_GPIO_ReadPin(UPS_main_sig_GPIO_Port, UPS_main_sig_Pin);
+
+			//This is event noting to manage the logs
+			eventFlag = (eventFlag & (~(1<<9)));
 
 		}
 	}
 	return;
 }
 
-void  UPSauxRelayOFF(){
-	if(UPSauxRelayState){
-		while (UPSauxRelayState){
+void  upsAuxRelayOff(){
+	if(upsAuxRelayState){
+		while (upsAuxRelayState){
 			/*to do : Implement the zero crossing switching technique*/
 			HAL_GPIO_WritePin(UPS_AUX_sig_GPIO_Port, UPS_AUX_sig_Pin, GPIO_PIN_RESET);
-			UPSauxRelayState = HAL_GPIO_ReadPin(UPS_AUX_sig_GPIO_Port, UPS_AUX_sig_Pin);
+			upsAuxRelayState = HAL_GPIO_ReadPin(UPS_AUX_sig_GPIO_Port, UPS_AUX_sig_Pin);
 
-			//to do : Implement the log for ups task.
+			//This is event noting to manage the logs
+			eventFlag = (eventFlag & (~(1<<10)));
 
 		}
 	}
@@ -346,20 +694,20 @@ void  UPSauxRelayOFF(){
 
 }
 
-void RincomingAuxRelayOFF() {
-	YRauxRelayTurnOFF();
-	BRauxRelayTurnOFF();
+void rIncomingAuxRelayOff() {
+	yrAuxRelayTurnOff();
+	brAuxRelayTurnOff();
 
 }
 
-void YincomingAuxRelayOFF() {
-	RYauxRelayTurnOFF();
-	BYauxRelayTurnOFF();
+void yIncomingAuxRelayOff() {
+	ryAuxRelayTurnOff();
+	byAuxRelayTurnOff();
 
 }
 
-void BincomingAuxRelayOFF() {
-	RBauxRelayTurnOFF();
-	YBauxRelayTurnOFF();
+void bIncomingAuxRelayOff() {
+	rbAuxRelayTurnOff();
+	ybAuxRelayTurnOff();
 
 }

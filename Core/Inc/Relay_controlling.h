@@ -11,37 +11,37 @@
 #ifndef INC_RELAY_CONTROLLING_H_
 #define INC_RELAY_CONTROLLING_H_
 
-extern volatile bool RmainRelayState, YmainRelayState, BmainRelayState, RYauxRelayState, YRauxRelayState, YBauxRelayState, BYauxRelayState, RBauxRelayState, BRauxRelayState, UPSmainRelayState, UPSauxRelayState;
+extern volatile bool rMainRelayState, yMainRelayState, bMainRelayState, ryAuxRelayState, yrAuxRelayState, ybAuxRelayState, byAuxRelayState, rbAuxRelayState, brAuxRelayState, upsMainRelayState, upsAuxRelayState;
 
 extern volatile uint32_t  eventFlag;;
 
-void RmainRelayTurnON();
-void YmainRelayTurnON();
-void BmainRelayTurnON();
-void RYauxRelayTurnON();
-void YRauxRelayTurnON();
-void YBauxRelayTurnON();
-void BYauxRelayTurnON();
-void BRauxRelayTurnON();
-void RBauxRelayTurnON();
-void UPSmainRelayON();
-void UPSauxRelayON();
+void rMainRelayTurnOn();
+void yMainRelayTurnOn();
+void bMainRelayTurnOn();
+void ryAuxRelayTurnOn();
+void yrAuxRelayTurnOn();
+void ybAuxRelayTurnOn();
+void byAuxRelayTurnOn();
+void brAuxRelayTurnOn();
+void rbAuxRelayTurnOn();
+void upsMainRelayOn();
+void upsAuxRelayOn();
 
-void RmainRelayTurnOFF();
-void YmainRelayTurnOFF();
-void BmainRelayTurnOFF();
-void RYauxRelayTurnOFF();
-void YRauxRelayTurnOFF();
-void YBauxRelayTurnOFF();
-void BYauxRelayTurnOFF();
-void BRauxRelayTurnOFF();
-void RBauxRelayTurnOFF();
-void UPSmainRelayOFF();
-void UPSauxRelayOFF();
+void rMainRelayTurnOff();
+void yMainRelayTurnOff();
+void bMainRelayTurnOff();
+void ryAuxRelayTurnOff();
+void yrAuxRelayTurnOff();
+void ybAuxRelayTurnOff();
+void byAuxRelayTurnOff();
+void brAuxRelayTurnOff();
+void rbAuxRelayTurnOff();
+void upsMainRelayOff();
+void upsAuxRelayOff();
 
-void RincomingAuxRelayOFF();
-void YincomingAuxRelayOFF();
-void BincomingAuxRelayOFF();
+void rIncomingAuxRelayOff();
+void yIncomingAuxRelayOff();
+void bIncomingAuxRelayOff();
 
 
 #endif /* INC_RELAY_CONTROLLING_H_ */

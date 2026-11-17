@@ -37,14 +37,14 @@
 
 // Call from the USART3 RX-event handler (ISR) with the burst just received.
 // ONLY detects the two command signatures and raises a flag — no flash work.
-void suOnRxBurst(const uint8_t *buf, uint16_t size);
+void otaStartRxIncomming(const uint8_t *buf, uint16_t size);
 
 // Call once per main-loop iteration. Runs the (blocking) receive or apply when
 // a signature was seen. apply() never returns (it resets the MCU).
-void suService(void);
+void otaIncomingCheck(void);
 
 // True while an update is in progress (so the app can skip metering/TX).
-bool suBusy(void);
+bool otaUpdating(void);
 
 
 
