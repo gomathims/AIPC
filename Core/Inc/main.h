@@ -59,10 +59,10 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SW2_Pin GPIO_PIN_13
 #define SW2_GPIO_Port GPIOC
-#define EX_tap1_sig_Pin GPIO_PIN_1
-#define EX_tap1_sig_GPIO_Port GPIOF
-#define EX_tap2_sig_Pin GPIO_PIN_10
-#define EX_tap2_sig_GPIO_Port GPIOG
+#define EX_TAP1_SIG_Pin GPIO_PIN_0
+#define EX_TAP1_SIG_GPIO_Port GPIOF
+#define EX_TAP2_SIG_Pin GPIO_PIN_1
+#define EX_TAP2_SIG_GPIO_Port GPIOF
 #define Digital_in_Pin GPIO_PIN_0
 #define Digital_in_GPIO_Port GPIOC
 #define R_ZX_Pin GPIO_PIN_3

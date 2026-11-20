@@ -192,8 +192,8 @@ void yrAuxRelayTurnOn() {
 
 				}
 			}
-			HAL_GPIO_WritePin(Y_AUX1_sig_GPIO_Port, Y_AUX1_sig_Pin, GPIO_PIN_SET);
-			yrAuxRelayState = HAL_GPIO_ReadPin(Y_AUX1_sig_GPIO_Port, Y_AUX1_sig_Pin);
+			HAL_GPIO_WritePin(Y_AUX2_sig_GPIO_Port, Y_AUX2_sig_Pin, GPIO_PIN_SET);
+			yrAuxRelayState = HAL_GPIO_ReadPin(Y_AUX2_sig_GPIO_Port, Y_AUX2_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<3));
@@ -225,8 +225,8 @@ void ybAuxRelayTurnOn() {
 				}
 			}
 
-			HAL_GPIO_WritePin(Y_AUX2_sig_GPIO_Port, Y_AUX2_sig_Pin, GPIO_PIN_SET);
-			ybAuxRelayState = HAL_GPIO_ReadPin(Y_AUX2_sig_GPIO_Port, Y_AUX2_sig_Pin);
+			HAL_GPIO_WritePin(Y_AUX1_sig_GPIO_Port, Y_AUX1_sig_Pin, GPIO_PIN_SET);
+			ybAuxRelayState = HAL_GPIO_ReadPin(Y_AUX1_sig_GPIO_Port, Y_AUX1_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<8));
@@ -259,8 +259,8 @@ void byAuxRelayTurnOn() {
 				}
 			}
 
-			HAL_GPIO_WritePin(B_AUX1_sig_GPIO_Port, B_AUX1_sig_Pin, GPIO_PIN_SET);
-			byAuxRelayState = HAL_GPIO_ReadPin(B_AUX1_sig_GPIO_Port, B_AUX1_sig_Pin);
+			HAL_GPIO_WritePin(B_AUX2_sig_GPIO_Port, B_AUX2_sig_Pin, GPIO_PIN_SET);
+			byAuxRelayState = HAL_GPIO_ReadPin(B_AUX2_sig_GPIO_Port, B_AUX2_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<6));
@@ -291,8 +291,8 @@ void brAuxRelayTurnOn() {
 
 				}
 			}
-			HAL_GPIO_WritePin(B_AUX2_sig_GPIO_Port, B_AUX2_sig_Pin, GPIO_PIN_SET);
-			brAuxRelayState = HAL_GPIO_ReadPin(B_AUX2_sig_GPIO_Port, B_AUX2_sig_Pin);
+			HAL_GPIO_WritePin(B_AUX1_sig_GPIO_Port, B_AUX1_sig_Pin, GPIO_PIN_SET);
+			brAuxRelayState = HAL_GPIO_ReadPin(B_AUX1_sig_GPIO_Port, B_AUX1_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag | (1<<4));
@@ -541,8 +541,8 @@ void yrAuxRelayTurnOff() {
 
 				}
 			}
-			HAL_GPIO_WritePin(Y_AUX1_sig_GPIO_Port,Y_AUX1_sig_Pin, GPIO_PIN_RESET);
-			yrAuxRelayState = HAL_GPIO_ReadPin(Y_AUX1_sig_GPIO_Port,Y_AUX1_sig_Pin);
+			HAL_GPIO_WritePin(Y_AUX2_sig_GPIO_Port,Y_AUX2_sig_Pin, GPIO_PIN_RESET);
+			yrAuxRelayState = HAL_GPIO_ReadPin(Y_AUX2_sig_GPIO_Port,Y_AUX2_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<3)));
@@ -573,8 +573,8 @@ void ybAuxRelayTurnOff() {
 
 				}
 			}
-			HAL_GPIO_WritePin(Y_AUX2_sig_GPIO_Port,Y_AUX2_sig_Pin, GPIO_PIN_RESET);
-			ybAuxRelayState = HAL_GPIO_ReadPin(Y_AUX2_sig_GPIO_Port,Y_AUX2_sig_Pin);
+			HAL_GPIO_WritePin(Y_AUX1_sig_GPIO_Port,Y_AUX1_sig_Pin, GPIO_PIN_RESET);
+			ybAuxRelayState = HAL_GPIO_ReadPin(Y_AUX1_sig_GPIO_Port,Y_AUX1_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<8)));
@@ -604,8 +604,8 @@ void byAuxRelayTurnOff() {
 
 				}
 			}
-			HAL_GPIO_WritePin(B_AUX1_sig_GPIO_Port,B_AUX1_sig_Pin, GPIO_PIN_RESET);
-			byAuxRelayState = HAL_GPIO_ReadPin(B_AUX1_sig_GPIO_Port,B_AUX1_sig_Pin);
+			HAL_GPIO_WritePin(B_AUX2_sig_GPIO_Port,B_AUX2_sig_Pin, GPIO_PIN_RESET);
+			byAuxRelayState = HAL_GPIO_ReadPin(B_AUX2_sig_GPIO_Port,B_AUX2_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<6)));
@@ -635,8 +635,8 @@ void brAuxRelayTurnOff() {
 
 				}
 			}
-			HAL_GPIO_WritePin(B_AUX2_sig_GPIO_Port,B_AUX2_sig_Pin, GPIO_PIN_RESET);
-			brAuxRelayState = HAL_GPIO_ReadPin(B_AUX2_sig_GPIO_Port,B_AUX2_sig_Pin);
+			HAL_GPIO_WritePin(B_AUX1_sig_GPIO_Port,B_AUX1_sig_Pin, GPIO_PIN_RESET);
+			brAuxRelayState = HAL_GPIO_ReadPin(B_AUX1_sig_GPIO_Port,B_AUX1_sig_Pin);
 
 			//This is event noting to manage the logs
 			eventFlag = (eventFlag & (~(1<<4)));
