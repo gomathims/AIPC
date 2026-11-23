@@ -153,7 +153,7 @@ volatile static bool timeSynced = false;
 float bateryVoltage;
 
 
-volatile uint32_t  eventFlag, previousEventFlag;
+volatile uint32_t  eventFlag, previousEventFlag;   //eventFlag- 0b->R on/off, 1b->Y on/off, 2b->B on/off, 3b->YRaux on/off, 4b->BRaux on/off, 5b->RYaux on/off, 6b->BYaux on/off, 7b->RBaux on/off, 8b->YBaux on/off, 9b->UPS on/off, 10b->UPSaux on/off, 11b->overloadR on/off, 12b->overloadY on/off, 13b->overloadB on/off, 14b->overloadUPS on/off, 15b-> overPowerConsumptionUPS, 16n->STMrestart
 volatile bool eventPassed;
 typedef struct event{
 	time_t carryEventTime;
@@ -169,8 +169,8 @@ uint32_t preSentTime;
 time_t  curTime;
 float avgPhases, preAvgPhases;
 
-bool cf1State,cf2State,cf3State,cf4State,cf5State,cf6State,cf7State;
-volatile uint32_t cf1HighTime,cf2HighTime,cf3HighTime,cf4HighTime,cf5HighTime,cf6HighTime,cf7HighTime, cf1LowTime,cf2LowTime,cf3LowTime,cf4LowTime,cf5LowTime,cf6LowTime,cf7LowTime;
+bool rCfState,yCfState,bCfState,ryCfState,ybCfState,brCfState,invCfState;
+volatile uint32_t rCfHighTime,yCfHighTime,bCfHighTime,ryCfHighTime,ybCfHighTime,brCfHighTime,invCfHighTime, rCfLowTime,yCfLowTime,bCfLowTime,ryCfLowTime,ybCfLowTime,brCfLowTime,invCfLowTime;
 
 
 RTC_TimeTypeDef rtcTime;
@@ -197,6 +197,7 @@ static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 void UARTcollection(uint16_t Size);
 void NTPsyncTimeToRTC(uint16_t Size);
+void storingProtectionValue(void);
 
 /* USER CODE END PFP */
 
@@ -247,106 +248,106 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 	}
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-
-												/*note to remember: why not else if? if the two contactor interrupt comes at same time "else if" could lead to be a problem.*/
-
-	uint32_t portBstate = GPIOB->IDR;
-	uint32_t portCstate = GPIOC->IDR;
-
-
-	if(GPIO_Pin == CF1_Pin){
-		if(portBstate & GPIO_Pin){
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-			cf1LowTime = 0;
-			cf1HighTime = HAL_GetTick();
-
-		}else{
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-			cf1HighTime = 0;
-			cf1LowTime = HAL_GetTick();
-		}
-
-	}
-	if(GPIO_Pin == CF2_Pin){
-
-		if (portBstate & GPIO_Pin) {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-			cf2LowTime = 0;
-			cf2HighTime = HAL_GetTick();
-		} else {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-			cf2HighTime = 0;
-			cf2LowTime = HAL_GetTick();
-		}
-
-
-	}
-	if(GPIO_Pin == CF3_Pin){
-
-		if (portBstate & GPIO_Pin) {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-			cf3LowTime = 0;
-			cf3HighTime = HAL_GetTick();
-
-		} else {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-			cf3HighTime = 0;
-			cf3LowTime = HAL_GetTick();
-
-		}
-
-	}
-	if(GPIO_Pin == CF4_Pin){
-		if (portBstate & GPIO_Pin) {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-			cf4LowTime = 0;
-			cf4HighTime = HAL_GetTick();
-		} else {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-			cf4HighTime = 0;
-			cf4LowTime = HAL_GetTick();
-		}
-
-	}
-	if(GPIO_Pin == CF5_Pin){
-		if (portCstate & GPIO_Pin) {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-			cf5LowTime = 0;
-			cf5HighTime = HAL_GetTick();
-		} else {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-			cf5HighTime = 0;
-			cf5LowTime = HAL_GetTick();
-		}
-
-	}
-	if(GPIO_Pin == CF6_Pin){
-		if (portCstate & GPIO_Pin) {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-			cf6LowTime = 0;
-			cf6HighTime = HAL_GetTick();
-		} else {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-			cf6HighTime = 0;
-			cf6LowTime = HAL_GetTick();
-		}
-
-	}
-	if(GPIO_Pin == CF7_Pin){
-		if (portCstate & GPIO_Pin) {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-			cf7LowTime = 0;
-			cf7HighTime = HAL_GetTick();
-		} else {
-//			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-			cf7HighTime = 0;
-			cf7LowTime = HAL_GetTick();
-		}
-
-	}
-
-}
+//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+//
+//												/*note to remember: why not else if? if the two contactor interrupt comes at same time "else if" could lead to be a problem.*/
+//
+//	uint32_t portBstate = GPIOB->IDR;
+//	uint32_t portCstate = GPIOC->IDR;
+//
+//
+//	if(GPIO_Pin == CF1_Pin){
+//		if(portBstate & GPIO_Pin){
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+//			rCfLowTime = 0;
+//			rCfHighTime = HAL_GetTick();
+//
+//		}else{
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+//			rCfHighTime = 0;
+//			rCfLowTime = HAL_GetTick();
+//		}
+//
+//	}
+//	if(GPIO_Pin == CF2_Pin){
+//
+//		if (portBstate & GPIO_Pin) {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+//			yCfLowTime = 0;
+//			yCfHighTime = HAL_GetTick();
+//		} else {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+//			yCfHighTime = 0;
+//			yCfLowTime = HAL_GetTick();
+//		}
+//
+//
+//	}
+//	if(GPIO_Pin == CF3_Pin){
+//
+//		if (portBstate & GPIO_Pin) {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+//			bCfLowTime = 0;
+//			bCfHighTime = HAL_GetTick();
+//
+//		} else {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+//			bCfHighTime = 0;
+//			bCfLowTime = HAL_GetTick();
+//
+//		}
+//
+//	}
+//	if(GPIO_Pin == CF4_Pin){
+//		if (portBstate & GPIO_Pin) {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+//			ryCfLowTime = 0;
+//			ryCfHighTime = HAL_GetTick();
+//		} else {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+//			ryCfHighTime = 0;
+//			ryCfLowTime = HAL_GetTick();
+//		}
+//
+//	}
+//	if(GPIO_Pin == CF5_Pin){
+//		if (portCstate & GPIO_Pin) {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+//			ybCfLowTime = 0;
+//			ybCfHighTime = HAL_GetTick();
+//		} else {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+//			ybCfHighTime = 0;
+//			ybCfLowTime = HAL_GetTick();
+//		}
+//
+//	}
+//	if(GPIO_Pin == CF6_Pin){
+//		if (portCstate & GPIO_Pin) {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+//			brCfLowTime = 0;
+//			brCfHighTime = HAL_GetTick();
+//		} else {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+//			brCfHighTime = 0;
+//			brCfLowTime = HAL_GetTick();
+//		}
+//
+//	}
+//	if(GPIO_Pin == CF7_Pin){
+//		if (portCstate & GPIO_Pin) {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+//			invCfLowTime = 0;
+//			invCfHighTime = HAL_GetTick();
+//		} else {
+////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+//			invCfHighTime = 0;
+//			invCfLowTime = HAL_GetTick();
+//		}
+//
+//	}
+//
+//}
 
 
 void UARTcollection(uint16_t Size) {
@@ -369,10 +370,12 @@ void UARTcollection(uint16_t Size) {
 				memcpy(&prot[ph].highI, &p[9], 4);
 			}
 			memcpy(&upsPowerLimit, &f[PROT_POWER_OFS], 4);
+			storingProtectionValue();
 			return;
 		}
 		protCheckSumMismatch = true;   // 0xCC seen but checksum bad: keep scanning
 	}
+
 }
 
 void NTPsyncTimeToRTC(uint16_t Size){
@@ -572,6 +575,9 @@ void BLdataCollectionL1(void) {
 		voltL1 = ((rxDataV1[0] << 16 | rxDataV1[1] << 8 | rxDataV1[2])
 				/ CALIB_VOL1);
 		uartGoFlag = uartGoFlag | 0X0001;
+		if (voltL1 <= 5) {
+			voltL1 = 0;
+		}
 //	  				printf("Vol1 = %.2f\r\n", voltL1);
 
 	}
@@ -580,6 +586,10 @@ void BLdataCollectionL1(void) {
 				/ CALIB_CUR1);
 		uartGoFlag = uartGoFlag | 0X0002;
 //	  				printf("curL1 = %.3f \r\n", curL1);
+		if (curL1 < 0.03) {
+			curL1 = 0;
+			powL1 = 0;
+		}
 
 	}
 	if (okP1) {
@@ -629,12 +639,19 @@ void BLdataCollectionL2(void) {
 				/ CALIB_VOL2);
 		uartGoFlag = uartGoFlag | 0X0010;
 		//	  				printf("Vol2 = %.2f\r\n", voltL2);
+		if (voltL2 <= 5) {
+			voltL2 = 0;
+		}
 	}
 	if (okC2) {
 		curL2 = ((rxDataC2[0] << 16 | rxDataC2[1] << 8 | rxDataC2[2])
 				/ CALIB_CUR2);
 		uartGoFlag = uartGoFlag | 0X0020;
 		//	  				printf("curL2 = %.3f \r\n", curL2);
+		if (curL2 < 0.03) {
+			curL2 = 0;
+			powL2 = 0;
+		}
 
 	}
 	if (okP2) {
@@ -652,6 +669,8 @@ void BLdataCollectionL2(void) {
 	}
 
 	//	  			printf("\r\n");
+	
+
 
 }
 
@@ -681,12 +700,19 @@ void BLdataCollectionL3(void) {
 				/ CALIB_VOL3);
 		uartGoFlag = uartGoFlag | 0X0100;
 //	  				printf("Vol3 = %.2f\r\n", voltL3);
+		if (voltL3 <= 5) {
+			voltL3 = 0;
+		}
 	}
 	if (okC3) {
 		curL3 = ((rxDataC3[0] << 16 | rxDataC3[1] << 8 | rxDataC3[2])
 				/ CALIB_CUR3);
 		uartGoFlag = uartGoFlag | 0X0200;
 //	  			printf("curL3 = %.3f \r\n", curL3);
+		if (curL3 < 0.03) {
+			curL3 = 0;
+			powL3 = 0;
+		}
 	}
 	if (okP3) {
 		powL3 = ((rxDataP3[0] << 16 | rxDataP3[1] << 8 | rxDataP3[2])
@@ -730,12 +756,19 @@ void BLdataCollectionL4(void) {
 				/ CALIB_VOL4);
 		uartGoFlag = uartGoFlag | 0X1000;
 //	  				printf("Vol4 = %.2f\r\n", voltL4);
+		if (voltL4 <= 5) {
+			voltL4 = 0;
+		}
 	}
 	if (okC4) {
 		curL4 = ((rxDataC4[0] << 16 | rxDataC4[1] << 8 | rxDataC4[2])
 				/ CALIB_CUR4);
 		uartGoFlag = uartGoFlag | 0X2000;
 //	  			printf("curL4 = %.3f \r\n", curL4);
+		if (curL4 < 0.03) {
+			curL4 = 0;
+			powL4 = 0;
+		}
 	}
 	if (okP4) {
 		powL4 = ((rxDataP4[0] << 16 | rxDataP4[1] << 8 | rxDataP4[2])
@@ -755,39 +788,6 @@ void BLdataCollectionL4(void) {
 
 void storingProtectionValue(){
 	/*Protection Settings assigning condition with hiding noise of volt and current*/
-
-	        if (voltL1 <= 1) {
-				voltL1 = 0;
-			}
-
-			if (voltL2 <= 2) {
-				voltL2 = 0;
-			}
-
-			if (voltL3 <= 3) {
-				voltL3 = 0;
-			}
-
-			if (voltL4 <= 4) {
-				voltL4 = 0;
-			}
-
-			if (curL1 < 0.03) {
-				curL1 = 0;
-				powL1 = 0;
-			}
-			if (curL2 < 0.03) {
-				curL2 = 0;
-				powL2 = 0;
-			}
-			if (curL3 < 0.03) {
-				curL3 = 0;
-				powL3 = 0;
-			}
-			if (curL4 < 0.03) {
-				curL4 = 0;
-				powL4 = 0;
-			}
 
 			if (prot[0].enabled) {
 				voltLow[0] = prot[0].lowV;
@@ -977,23 +977,25 @@ void SwitchoverManagement(){
 
 
 					if (!healthyRphase || overloadAlertL1) {
-						if (rMainRelayState /*|| cf1State*/) {
+						if (rMainRelayState || rCfState) {
 							// Function to OFF the relay once, inside it should OFF the Aux of the R main relay
 							rMainRelayTurnOff();
 							// give some delay if not feedback
 	//						HAL_Delay(500);
 
+						}else if(overloadAlertL1 && ((ryCfState || yrAuxRelayState) || (brCfState || brAuxRelayState))){
+							rIncomingAuxRelayOff();
 						}
 						if (healthyYphase && healthyBphase && !yrAuxRelayState
-								&& !brAuxRelayState && !overloadAlertL1/* && !cf1State && !cf4State && !cf6State  && !cf7State*/) {		//prevention condition
+								&& !brAuxRelayState && !overloadAlertL1 && !rCfState && !ryCfState && !brCfState  && !invCfState) {		//prevention condition
 							// choose any one of the phase with the help of the current
 							// with that phase ON the the Aux to the the R phase once
 							/*depends on the current Aux will switch over*/
-							if ((curL2 <= curL3)/* && !cf1State && !cf4State && !cf6State  && !cf7State*/) {
+							if ((curL2 <= curL3) && !rCfState && !ryCfState && !brCfState  && !invCfState) {
 								yrAuxRelayTurnOn();
 
 
-							} else if ((curL3 < curL2) /*&& !cf1State && !cf4State && !cf6State  && !cf7State*/) {
+							} else if ((curL3 < curL2) && !rCfState && !ryCfState && !brCfState  && !invCfState) {
 								brAuxRelayTurnOn();
 
 							}
@@ -1001,13 +1003,13 @@ void SwitchoverManagement(){
 							// 	yrAuxRelayTurnOn();
 							// }
 						} else if(!overloadAlertL1) {
-							if (healthyYphase && !yrAuxRelayState && !brAuxRelayState /*&& !cf1State && !cf4State && !cf6State  && !cf7State*/) {
+							if (healthyYphase && !yrAuxRelayState && !brAuxRelayState && !rCfState && !ryCfState && !brCfState  && !invCfState) {
 								// ON the Y phase Aux to the R main once
 								yrAuxRelayTurnOn();
 
 
 							} else if (healthyBphase && !yrAuxRelayState
-									&& !brAuxRelayState /*&& !cf1State && !cf4State && !cf6State  && !cf7State*/) {
+									&& !brAuxRelayState && !rCfState && !ryCfState && !brCfState  && !invCfState) {
 								// ON the B phase Aux to the R main once
 								brAuxRelayTurnOn();
 
@@ -1017,8 +1019,8 @@ void SwitchoverManagement(){
 						}
 
 					} else if(healthyRphase && !overloadAlertL1) {
-						if (!rMainRelayState /*&& !cf1State && !cf7State*/) {
-							if (yrAuxRelayState || brAuxRelayState /*|| cf4State || cf6State*/) {
+						if (!rMainRelayState && !rCfState && !invCfState) {
+							if (yrAuxRelayState || brAuxRelayState || ryCfState || brCfState) {
 								// function to OFF the all Aux from other phase to R phases
 								rIncomingAuxRelayOff();
 	//							HAL_Delay(500);
@@ -1026,29 +1028,33 @@ void SwitchoverManagement(){
 
 							// give some delay if not feedback
 							// Turn ON the R main relay
-//							if(!cf4State && !cf6State )
+//							if(!ryCfState && !brCfState ){
+							if((!ryCfState && !yrAuxRelayState) && (!brCfState && !brAuxRelayState)){
 							rMainRelayTurnOn();
+							}
 
 						}
 
 					}
 
 					if (!healthyYphase || overloadAlertL2) {
-						if (yMainRelayState /*|| cf2State*/) {
+						if (yMainRelayState || yCfState) {
 							// Function to OFF the relay once, inside it should OFF the Aux of the Y main relay
 							yMainRelayTurnOff();
 							// give some delay if not feedback
 	//						HAL_Delay(500);
 
+						}else if(overloadAlertL2 &&((ryCfState || ryAuxRelayState) || (ybCfState || byAuxRelayState))){
+							yIncomingAuxRelayOff();
 						}
 						if (healthyRphase && healthyBphase && !ryAuxRelayState
-								&& !byAuxRelayState && !overloadAlertL2  /*&& !cf2State && !cf4State && !cf5State  && !cf7State*/) { 		//prevention condition
+								&& !byAuxRelayState && !overloadAlertL2  && !yCfState && !ryCfState && !ybCfState  && !invCfState) { 		//prevention condition
 							// choose any one of the phase with the help of the current
 							// with that phase ON the the Aux to the the R phase once
 							/*depends on the current Aux will switch over*/
-							if ((curL1 <= curL3) /*&& !cf2State && !cf4State && !cf5State  && !cf7State*/) {
+							if ((curL1 <= curL3) && !yCfState && !ryCfState && !ybCfState  && !invCfState) {
 								ryAuxRelayTurnOn();
-							} else if ((curL3 < curL1) /*&& !cf2State && !cf4State && !cf5State  && !cf7State*/) {
+							} else if ((curL3 < curL1) && !yCfState && !ryCfState && !ybCfState  && !invCfState) {
 								byAuxRelayTurnOn();
 							}
 //							else {
@@ -1056,11 +1062,11 @@ void SwitchoverManagement(){
 //							}
 
 						} else if(!overloadAlertL2){
-							if (healthyRphase && !ryAuxRelayState && !byAuxRelayState /*&& !cf2State && !cf4State && !cf5State  && !cf7State*/) {
+							if (healthyRphase && !ryAuxRelayState && !byAuxRelayState && !yCfState && !ryCfState && !ybCfState  && !invCfState) {
 								// ON the Y phase Aux to the R main once
 								ryAuxRelayTurnOn();
 							} else if (healthyBphase && !ryAuxRelayState
-									&& !byAuxRelayState /*&& !cf2State && !cf4State && !cf5State  && !cf7State*/) {
+									&& !byAuxRelayState && !yCfState && !ryCfState && !ybCfState  && !invCfState) {
 								// ON the B phase Aux to the R main once
 								byAuxRelayTurnOn();
 							} else {
@@ -1070,37 +1076,42 @@ void SwitchoverManagement(){
 						}
 
 					} else if(healthyYphase && !overloadAlertL2) {
-						if (!yMainRelayState /*&& !cf2State && !cf7State*/) {
-							if (ryAuxRelayState || byAuxRelayState /*|| cf4State || cf5State*/) {
+						if (!yMainRelayState && !yCfState && !invCfState) {
+							if (ryAuxRelayState || byAuxRelayState || ryCfState || ybCfState) {
 								// function to OFF the all Aux from other phase to Y phases
 								yIncomingAuxRelayOff();
 								// give some delay if not feedback
 	//							HAL_Delay(500);
 							}
 							// Turn ON the Y main relay
-//							if(!cf4State && !cf5State)
+//							if(!ryCfState && !ybCfState){
+							if((!ryCfState && !ryAuxRelayState) && (!ybCfState && !byAuxRelayState)){
 							yMainRelayTurnOn();
+							}
+
 
 
 						}
 					}
 
 					if (!healthyBphase || overloadAlertL3) {
-						if (bMainRelayState /*|| cf3State*/) {
+						if (bMainRelayState || bCfState) {
 							// Function to OFF the relay once, inside it should OFF the Aux of the B main relay
 							bMainRelayTurnOff();
 							// give some delay if not feedback
 	//						HAL_Delay(500);
 
+						}else if(overloadAlertL3 && ((brCfState || rbAuxRelayState) || (ybCfState || ybAuxRelayState))){
+							bIncomingAuxRelayOff();
 						}
 						if (healthyRphase && healthyYphase && !rbAuxRelayState
-								&& !ybAuxRelayState && !overloadAlertL3 /* && !cf3State && !cf6State && !cf5State  && !cf7State*/) {		//prevention condition
+								&& !ybAuxRelayState && !overloadAlertL3  && !bCfState && !brCfState && !ybCfState  && !invCfState) {		//prevention condition
 							// choose any one of the phase with the help of the current
 							// with that phase ON the the Aux to the the R phase once
 							/*depends on the current Aux will switch over*/
-							if ((curL1 <= curL2) /*&& !cf3State && !cf6State && !cf5State  && !cf7State*/) {
+							if ((curL1 <= curL2) && !bCfState && !brCfState && !ybCfState  && !invCfState) {
 								rbAuxRelayTurnOn();
-							} else if ((curL2 < curL1) && !ybAuxRelayState /* && !cf3State && !cf6State && !cf5State  && !cf7State*/) {
+							} else if ((curL2 < curL1) && !ybAuxRelayState  && !bCfState && !brCfState && !ybCfState  && !invCfState) {
 								ybAuxRelayTurnOn();
 							}
 //							else {
@@ -1109,11 +1120,11 @@ void SwitchoverManagement(){
 
 
 						} else if(!overloadAlertL3) {
-							if (healthyRphase && !rbAuxRelayState && !ybAuxRelayState /* && !cf3State && !cf6State && !cf5State  && !cf7State*/) {
+							if (healthyRphase && !rbAuxRelayState && !ybAuxRelayState  && !bCfState && !brCfState && !ybCfState  && !invCfState) {
 								// ON the Y phase Aux to the R main once
 								rbAuxRelayTurnOn();
 							} else if (healthyYphase && !rbAuxRelayState
-									&& !ybAuxRelayState  /*&& !cf3State && !cf6State && !cf5State  && !cf7State*/) {
+									&& !ybAuxRelayState  && !bCfState && !brCfState && !ybCfState  && !invCfState) {
 								// ON the B phase Aux to the R main once
 								ybAuxRelayTurnOn();
 							} else {
@@ -1122,29 +1133,32 @@ void SwitchoverManagement(){
 
 						}
 					} else if(healthyBphase && !overloadAlertL3) {
-						if (!bMainRelayState /*&& !cf3State && !cf7State*/) {
-							if (rbAuxRelayState || ybAuxRelayState /*|| cf6State || cf5State*/) {
-								// function to OFF the all Aux from other phase to B phases
+						if (!bMainRelayState && !bCfState && !invCfState) {
+							if (rbAuxRelayState || ybAuxRelayState || brCfState || ybCfState) {
+								// function to OFF the all Ax from other phase to B phases
 								bIncomingAuxRelayOff();
 								// give some delay if not feedback
 	//							HAL_Delay(500);
 							}
 							// Turn ON the B main relay
-//							if(!cf6State && !cf5State)
+//							if(!brCfState && !ybCfState){
+							if((!brCfState && !rbAuxRelayState) && (!ybCfState && !ybAuxRelayState)){
 							bMainRelayTurnOn();
+							}
+
 
 						}
 
 					}
 
-				if(healthyUPS && !overPowerAlertL4 && !overloadAlertL4 && !healthyRphase && !healthyYphase && !healthyBphase && !rMainRelayState && !yMainRelayState && !bMainRelayState && !cf1State && !cf2State && !cf3State && !cf4State && !cf5State && !cf6State){
-					if(!cf7State){
+				if(healthyUPS && !overPowerAlertL4 && !overloadAlertL4 && !healthyRphase && !healthyYphase && !healthyBphase && !rMainRelayState && !yMainRelayState && !bMainRelayState && !rCfState && !yCfState && !bCfState && !ryCfState && !ybCfState && !brCfState){
+					if(!invCfState){
 						upsAuxRelayOff();
 						upsMainRelayOn();
 					}
 				}else{
-					upsAuxRelayOn();
 					upsMainRelayOff();
+					upsAuxRelayOn();
 				}
 
 				/*End of this individual function*/
@@ -1155,65 +1169,123 @@ void SwitchoverManagement(){
 
 
 void feedbackHandler(){
-	if (cf1LowTime && ((HAL_GetTick() - cf1LowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf1State = true;
+	if(!(HAL_GPIO_ReadPin(CF1_GPIO_Port, CF1_Pin)) && !(rCfLowTime)){
+		rCfHighTime = 0;
+		rCfLowTime = HAL_GetTick();
+	}else if(HAL_GPIO_ReadPin(CF1_GPIO_Port, CF1_Pin) && !(rCfHighTime)){
+		rCfLowTime = 0;
+		rCfHighTime = HAL_GetTick();
+	}
+		if(!(HAL_GPIO_ReadPin(CF2_GPIO_Port, CF2_Pin)) && !(yCfLowTime)){
+		yCfHighTime = 0;
+		yCfLowTime = HAL_GetTick();
+	}else if(HAL_GPIO_ReadPin(CF2_GPIO_Port, CF2_Pin) && !(yCfHighTime)){
+		yCfLowTime = 0;
+		yCfHighTime = HAL_GetTick();
+	}
+
+	if(!(HAL_GPIO_ReadPin(CF3_GPIO_Port, CF3_Pin)) && !(bCfLowTime)){
+		bCfHighTime = 0;
+		bCfLowTime = HAL_GetTick();
+	}else if(HAL_GPIO_ReadPin(CF3_GPIO_Port, CF3_Pin) && !(bCfHighTime)){
+		bCfLowTime = 0;
+		bCfHighTime = HAL_GetTick();
+	}
+
+	if(!(HAL_GPIO_ReadPin(CF4_GPIO_Port, CF4_Pin)) && !(ryCfLowTime)){
+		ryCfHighTime = 0;
+		ryCfLowTime = HAL_GetTick();
+	}else if(HAL_GPIO_ReadPin(CF4_GPIO_Port, CF4_Pin) && !(ryCfHighTime)){
+		ryCfLowTime = 0;
+		ryCfHighTime = HAL_GetTick();
+	}
+
+	if(!(HAL_GPIO_ReadPin(CF5_GPIO_Port, CF5_Pin)) && !(ybCfLowTime)){
+		ybCfHighTime = 0;
+		ybCfLowTime = HAL_GetTick();
+	}else if(HAL_GPIO_ReadPin(CF5_GPIO_Port, CF5_Pin) && !(ybCfHighTime)){
+		ybCfLowTime = 0;
+		ybCfHighTime = HAL_GetTick();
+	}
+
+	if(!(HAL_GPIO_ReadPin(CF6_GPIO_Port, CF6_Pin)) && !(brCfLowTime)){
+		brCfHighTime = 0;
+		brCfLowTime = HAL_GetTick();
+	}else if(HAL_GPIO_ReadPin(CF6_GPIO_Port, CF6_Pin) && !(brCfHighTime)){
+		brCfLowTime = 0;
+		brCfHighTime = HAL_GetTick();
+	}
+
+	if(!(HAL_GPIO_ReadPin(CF7_GPIO_Port, CF7_Pin)) && !(invCfLowTime)){
+		invCfHighTime = 0;
+		invCfLowTime = HAL_GetTick();
+	}else if(HAL_GPIO_ReadPin(CF7_GPIO_Port, CF7_Pin) && !(invCfHighTime)){
+		invCfLowTime = 0;
+		invCfHighTime = HAL_GetTick();
+	}
+
+
+
+
+	if (rCfLowTime && ((HAL_GetTick() - rCfLowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		rCfState = true;
 		contactorStatus |= 1<<0;
-	} else if (cf1HighTime && ((HAL_GetTick() - cf1HighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf1State = false;
+	} else if (rCfHighTime && ((HAL_GetTick() - rCfHighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		rCfState = false;
 		contactorStatus &= ~(1<<0);
 	}
 
 
-	if (cf2LowTime && ((HAL_GetTick() - cf2LowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf2State = true;
+	if (yCfLowTime && ((HAL_GetTick() - yCfLowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		yCfState = true;
 		contactorStatus |= 1<<1;
-	} else if (cf2HighTime && ((HAL_GetTick() - cf2HighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf2State = false;
+	} else if (yCfHighTime && ((HAL_GetTick() - yCfHighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		yCfState = false;
 		contactorStatus &= ~(1<<1);
 	}
 
 
-	if (cf3LowTime && ((HAL_GetTick() - cf3LowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf3State = true;
+	if (bCfLowTime && ((HAL_GetTick() - bCfLowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		bCfState = true;
 		contactorStatus |= 1<<2;
-	} else if (cf3HighTime && ((HAL_GetTick() - cf3HighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf3State = false;
+	} else if (bCfHighTime && ((HAL_GetTick() - bCfHighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		bCfState = false;
 		contactorStatus &= ~(1<<2);
 	}
 
 
-	if (cf4LowTime && ((HAL_GetTick() - cf4LowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf4State = true;
+	if (ryCfLowTime && ((HAL_GetTick() - ryCfLowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		ryCfState = true;
 		contactorStatus |= 1<<3;
-	} else if (cf4HighTime && ((HAL_GetTick() - cf4HighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf4State = false;
+	} else if (ryCfHighTime && ((HAL_GetTick() - ryCfHighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		ryCfState = false;
 		contactorStatus &= ~(1<<3);
 	}
 
 
-	if (cf5LowTime && ((HAL_GetTick() - cf5LowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf5State = true;
+	if (ybCfLowTime && ((HAL_GetTick() - ybCfLowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		ybCfState = true;
 		contactorStatus |= 1<<4;
-	} else if (cf5HighTime && ((HAL_GetTick() - cf5HighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf5State = false;
+	} else if (ybCfHighTime && ((HAL_GetTick() - ybCfHighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		ybCfState = false;
 		contactorStatus &= ~(1<<4);
 	}
 
 
-	if (cf6LowTime && ((HAL_GetTick() - cf6LowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf6State = true;
+	if (brCfLowTime && ((HAL_GetTick() - brCfLowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		brCfState = true;
 		contactorStatus |= 1<<5;
-	} else if (cf6HighTime && ((HAL_GetTick() - cf6HighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf6State = false;
+	} else if (brCfHighTime && ((HAL_GetTick() - brCfHighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		brCfState = false;
 		contactorStatus &= ~(1<<5);
 	}
 
 
-	if (cf7LowTime && ((HAL_GetTick() - cf7LowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf7State = true;
+	if (invCfLowTime && ((HAL_GetTick() - invCfLowTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		invCfState = true;
 		contactorStatus |= 1<<6;
-	} else if (cf7HighTime && ((HAL_GetTick() - cf7HighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
-		cf7State = false;
+	} else if (invCfHighTime && ((HAL_GetTick() - invCfHighTime) >= CONTACTOR_DEBOUNCE_DELAY)) {
+		invCfState = false;
 		contactorStatus &= ~(1<<6);
 	}
 }
@@ -1227,7 +1299,7 @@ enum contactorStatus PhysicalFailFaultFinder() {
 	
 
 	/*To do: Charging Input of the battery is control by the relay, that relay need to OFF when Battery output is enable. */
-	if((((cf1State && rMainRelayState) || (cf2State && yMainRelayState) || (cf3State && bMainRelayState)) && !upsAuxRelayState) || (upsMainRelayState && upsAuxRelayState)){
+	if((((rCfState && rMainRelayState) || (yCfState && yMainRelayState) || (bCfState && bMainRelayState)) && !upsAuxRelayState) || (upsMainRelayState && upsAuxRelayState)){
 		return MALFUNCTION;
 	}
 
@@ -1243,7 +1315,7 @@ enum contactorStatus PhysicalFailFaultFinder() {
 		return DANGER;
 	} else if (conductingContactorCount == 3) {
 		return SAFE;
-	} else if (conductingContactorCount == 1 && upsMainRelayState && cf7State) {
+	} else if (conductingContactorCount == 1 && upsMainRelayState && invCfState) {
 		return SAFE;
 	} else{
 		return WARNING;
@@ -1253,7 +1325,6 @@ enum contactorStatus PhysicalFailFaultFinder() {
 
 
 /* USER CODE END 0 */
-
 
 /**
   * @brief  The application entry point.
@@ -1310,21 +1381,34 @@ int main(void)
 
   /*The following assignment shows that the state of the contactor while MCU boot*/
   contactorStatus = 0;
-  cf1State = !(GPIOB->IDR & CF1_Pin);
-  contactorStatus |= cf1State<<0;
-  cf2State = !(GPIOB->IDR & CF2_Pin);
-  contactorStatus |= cf2State<<1;
-  cf3State = !(GPIOB->IDR & CF3_Pin);
-  contactorStatus |= cf3State<<2;
-  cf4State = !(GPIOB->IDR & CF4_Pin);
-  contactorStatus |= cf4State<<3;
-  cf5State = !(GPIOC->IDR & CF5_Pin);
-  contactorStatus |= cf5State<<4;
-  cf6State = !(GPIOC->IDR & CF6_Pin);
-  contactorStatus |= cf6State<<5;
-  cf7State = !(GPIOC->IDR & CF7_Pin);
-  contactorStatus |= cf7State<<6;
+  rCfState = !(GPIOB->IDR & CF1_Pin);
+  contactorStatus |= rCfState<<0;
+  yCfState = !(GPIOB->IDR & CF2_Pin);
+  contactorStatus |= yCfState<<1;
+  bCfState = !(GPIOB->IDR & CF3_Pin);
+  contactorStatus |= bCfState<<2;
+  ryCfState = !(GPIOB->IDR & CF4_Pin);
+  contactorStatus |= ryCfState<<3;
+  ybCfState = !(GPIOC->IDR & CF5_Pin);
+  contactorStatus |= ybCfState<<4;
+  brCfState = !(GPIOC->IDR & CF6_Pin);
+  contactorStatus |= brCfState<<5;
+  invCfState = !(GPIOC->IDR & CF7_Pin);
+  contactorStatus |= invCfState<<6;
 
+ voltLow[0] = DEFAULT_LOWVOLTAGE_LIMIT;
+ voltHigh[0] = DEFAULT_HIGHVOLTAGE_LIMIT;
+ overload[0] = DEFAULT_OVERLOAD_LIMIT;
+ voltLow[1] = DEFAULT_LOWVOLTAGE_LIMIT;
+ voltHigh[1] = DEFAULT_HIGHVOLTAGE_LIMIT;
+ overload[1] = DEFAULT_OVERLOAD_LIMIT;
+ voltLow[2] = DEFAULT_LOWVOLTAGE_LIMIT;
+ voltHigh[2] = DEFAULT_HIGHVOLTAGE_LIMIT;
+ overload[2] = DEFAULT_OVERLOAD_LIMIT;
+ voltLow[3] = DEFAULT_LOWVOLTAGE_LIMIT;
+ voltHigh[3] = DEFAULT_HIGHVOLTAGE_LIMIT;
+ overload[3] = DEFAULT_OVERLOAD_LIMIT;
+ powerLimit4 = DEFAULT_POWER_LIMIT;
 
 
 //  This is event noting to manage the logs for restart
@@ -1362,8 +1446,6 @@ int main(void)
 
 
 	  	feedbackHandler();
-
-	  	storingProtectionValue();
 
 	  	phaseHealthCheck();
 
@@ -1424,7 +1506,7 @@ int main(void)
 
 				if (uartGoFlag & 0XFFFF) {
 					HAL_UART_Transmit(&huart3, (uint8_t*) "STM", 4, 10);
-					uint8_t transmit[58];
+					uint8_t transmit[60];
 					relayStatus = 0;
 					relayStatus |= rMainRelayState << 0;
 					relayStatus |= yMainRelayState << 1;
@@ -1456,6 +1538,7 @@ int main(void)
 					memcpy((&transmit[48]), &relayStatus, 2);
 					memcpy((&transmit[50]), &bateryVoltage,4);
 					memcpy((&transmit[54]), &curTime,4);
+					memcpy((&transmit[58]), &contactorStatus,1);
 					HAL_UART_Transmit(&huart3, (uint8_t*) &transmit, sizeof(transmit),10);
 					uartGoFlag = 0;
 				}
@@ -1869,8 +1952,10 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(R_AUX2_sig_GPIO_Port, R_AUX2_sig_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : SW2_Pin Digital_in_Pin R_ZX_Pin */
-  GPIO_InitStruct.Pin = SW2_Pin|Digital_in_Pin|R_ZX_Pin;
+  /*Configure GPIO pins : SW2_Pin Digital_in_Pin R_ZX_Pin CF5_Pin
+                           CF6_Pin CF7_Pin */
+  GPIO_InitStruct.Pin = SW2_Pin|Digital_in_Pin|R_ZX_Pin|CF5_Pin
+                          |CF6_Pin|CF7_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -1908,23 +1993,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : USP_LEAK_Pin UPS_ZX_Pin */
-  GPIO_InitStruct.Pin = USP_LEAK_Pin|UPS_ZX_Pin;
+  /*Configure GPIO pins : USP_LEAK_Pin UPS_ZX_Pin CF1_Pin CF2_Pin
+                           CF3_Pin CF4_Pin */
+  GPIO_InitStruct.Pin = USP_LEAK_Pin|UPS_ZX_Pin|CF1_Pin|CF2_Pin
+                          |CF3_Pin|CF4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : CF1_Pin CF2_Pin CF3_Pin CF4_Pin */
-  GPIO_InitStruct.Pin = CF1_Pin|CF2_Pin|CF3_Pin|CF4_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : CF5_Pin CF6_Pin CF7_Pin */
-  GPIO_InitStruct.Pin = CF5_Pin|CF6_Pin|CF7_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LED2_Pin LED1_Pin */
   GPIO_InitStruct.Pin = LED2_Pin|LED1_Pin;
@@ -1946,13 +2021,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(R_AUX2_sig_GPIO_Port, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
