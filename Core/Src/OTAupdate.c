@@ -27,7 +27,26 @@ static volatile bool otaReqPending   = false;
 static volatile bool otaApplyPending = false;
 static volatile bool otaBusy         = false;
 
+// Set only after a staged image has passed its CRC32 check against flash.
+// RAM-only on purpose: after any reset the image must be re-staged before it
+// can be applied, so a stale or half-written bank can never be swapped in.
+static bool otaStagedOk = false;
+
 bool otaUpdating(void) { return otaBusy; }
+
+// ---------------------------------------------------------------------------
+// CRC-32 (IEEE 802.3 / zlib: reflected, poly 0xEDB88320, init and final XOR
+// 0xFFFFFFFF). Must match crc32Update() in the ESP's stm_ota.cpp.
+// Bitwise: ~50 ms for a full 256 KB bank at 170 MHz, no table in RAM/flash.
+// ---------------------------------------------------------------------------
+static uint32_t otaCrc32Update(uint32_t crc, const uint8_t *p, uint32_t n) {
+    while (n--) {
+        crc ^= *p++;
+        for (uint8_t k = 0; k < 8; k++)
+            crc = (crc >> 1) ^ (0xEDB88320UL & (0UL - (crc & 1UL)));
+    }
+    return crc;
+}
 
 // ---------------------------------------------------------------------------
 // Signature detection — runs in ISR context, so it only sets a flag.
@@ -136,6 +155,9 @@ static bool suEraseInactive(void) {
 // Stage 1 — receive the image into the inactive bank
 // ---------------------------------------------------------------------------
 static bool otaReceiveImage(void) {
+    // The inactive bank is about to be erased, so whatever was staged is gone.
+    otaStagedOk = false;
+
     // Erase first — this is the multi-second wait the ESP allows before 0xAB.
 
     if (!suEraseInactive()) return false;
@@ -168,15 +190,35 @@ static bool otaReceiveImage(void) {
         // HAL_IWDG_Refresh(&hiwdg);   // <-- uncomment if you run the IWDG
     }
 
+    // Trailer: CRC32 of the `total` image bytes (not the 0xFF padding), LE.
+    uint8_t crcb[4];
+    if (ok && !otaRxRead(crcb, 4, 3000)) ok = false;
+
     HAL_FLASH_Lock();
     otaRxStopRestoreIdle();
-    return ok;
+    if (!ok) return false;
+
+    // Verify against what actually landed in flash, not what came over the
+    // wire: this catches ring-buffer overruns, UART corruption AND bad writes.
+    uint32_t expected = (uint32_t)crcb[0] | ((uint32_t)crcb[1] << 8) |
+                        ((uint32_t)crcb[2] << 16) | ((uint32_t)crcb[3] << 24);
+    uint32_t actual = otaCrc32Update(0xFFFFFFFFUL,
+                                     (const uint8_t *)OTA_INACTIVE_BASE, total) ^ 0xFFFFFFFFUL;
+    if (actual != expected) return false;
+
+    otaStagedOk = true;
+    return true;
 }
 
 // ---------------------------------------------------------------------------
 // Stage 2 — apply: ack, flip BFB2 to the bank we just wrote, reset.
 // ---------------------------------------------------------------------------
+// Returns only if refused (nothing verified is staged); otherwise resets.
 static void otaApply(void) {
+    if (!otaStagedOk) {
+        otaTx(SU_DONE_FAIL);         // 0xAE: refuse to boot an unverified bank
+        return;
+    }
     otaTx(SU_DONE_OK);               // 0xAC BEFORE the reset (ESP needs this first)
     HAL_Delay(50);                  // let the byte physically leave
 
@@ -208,7 +250,8 @@ void otaIncomingCheck(void) {
     if (otaApplyPending) {
         otaApplyPending = false;
         otaBusy = true;
-        otaApply();                  // never returns
+        otaApply();                  // returns only if refused
+        otaBusy = false;
     }
 }
 

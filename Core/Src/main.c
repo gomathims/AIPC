@@ -149,7 +149,7 @@ bool resumel1,resumel2,resumel3,resumel4; //not used until overload reset is act
 
 
 uint64_t receivedUnixTime;
-volatile static bool timeSynced = false;
+volatile static bool timeTobeSynched = false;
 float bateryVoltage;
 
 
@@ -397,7 +397,7 @@ void NTPsyncTimeToRTC(uint16_t Size){
 			    ((uint64_t)Uart3RXbuffer[i+6] << 40) |
 			    ((uint64_t)Uart3RXbuffer[i+7] << 48) |
 			    ((uint64_t)Uart3RXbuffer[i+8] << 56);
-			timeSynced =true;
+			timeTobeSynched =true;
 //			printf("%lu\r\n",(unsigned long)receivedUnixTime);
 			return;
 		}
@@ -497,7 +497,7 @@ void overloadResetHandler(void) {
 void SyncTimeToSTMrtc(void){
  	 /* Process of Time sync when the ESP time get synced or at login. Then continiously running the RTC in the background with the help of the Vbat support */
 
-	if (timeSynced == 1) {
+	if (timeTobeSynched == 1) {
 		time_t setUnixTime = (time_t) (receivedUnixTime + 19800);
 		struct tm time;
 		gmtime_r(&setUnixTime, &time);
@@ -516,7 +516,7 @@ void SyncTimeToSTMrtc(void){
 
 		HAL_RTC_SetTime(&hrtc, &rtcTime, RTC_FORMAT_BIN);
 		HAL_RTC_SetDate(&hrtc, &rtcDate, RTC_FORMAT_BIN);
-		timeSynced = false;
+		timeTobeSynched = false;
 
 	}
 
