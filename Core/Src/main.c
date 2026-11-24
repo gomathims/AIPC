@@ -248,106 +248,6 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 	}
 }
 
-//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-//
-//												/*note to remember: why not else if? if the two contactor interrupt comes at same time "else if" could lead to be a problem.*/
-//
-//	uint32_t portBstate = GPIOB->IDR;
-//	uint32_t portCstate = GPIOC->IDR;
-//
-//
-//	if(GPIO_Pin == CF1_Pin){
-//		if(portBstate & GPIO_Pin){
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-//			rCfLowTime = 0;
-//			rCfHighTime = HAL_GetTick();
-//
-//		}else{
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-//			rCfHighTime = 0;
-//			rCfLowTime = HAL_GetTick();
-//		}
-//
-//	}
-//	if(GPIO_Pin == CF2_Pin){
-//
-//		if (portBstate & GPIO_Pin) {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-//			yCfLowTime = 0;
-//			yCfHighTime = HAL_GetTick();
-//		} else {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-//			yCfHighTime = 0;
-//			yCfLowTime = HAL_GetTick();
-//		}
-//
-//
-//	}
-//	if(GPIO_Pin == CF3_Pin){
-//
-//		if (portBstate & GPIO_Pin) {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-//			bCfLowTime = 0;
-//			bCfHighTime = HAL_GetTick();
-//
-//		} else {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-//			bCfHighTime = 0;
-//			bCfLowTime = HAL_GetTick();
-//
-//		}
-//
-//	}
-//	if(GPIO_Pin == CF4_Pin){
-//		if (portBstate & GPIO_Pin) {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-//			ryCfLowTime = 0;
-//			ryCfHighTime = HAL_GetTick();
-//		} else {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-//			ryCfHighTime = 0;
-//			ryCfLowTime = HAL_GetTick();
-//		}
-//
-//	}
-//	if(GPIO_Pin == CF5_Pin){
-//		if (portCstate & GPIO_Pin) {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-//			ybCfLowTime = 0;
-//			ybCfHighTime = HAL_GetTick();
-//		} else {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-//			ybCfHighTime = 0;
-//			ybCfLowTime = HAL_GetTick();
-//		}
-//
-//	}
-//	if(GPIO_Pin == CF6_Pin){
-//		if (portCstate & GPIO_Pin) {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-//			brCfLowTime = 0;
-//			brCfHighTime = HAL_GetTick();
-//		} else {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-//			brCfHighTime = 0;
-//			brCfLowTime = HAL_GetTick();
-//		}
-//
-//	}
-//	if(GPIO_Pin == CF7_Pin){
-//		if (portCstate & GPIO_Pin) {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-//			invCfLowTime = 0;
-//			invCfHighTime = HAL_GetTick();
-//		} else {
-////			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-//			invCfHighTime = 0;
-//			invCfLowTime = HAL_GetTick();
-//		}
-//
-//	}
-//
-//}
 
 
 void UARTcollection(uint16_t Size) {
@@ -1498,7 +1398,7 @@ int main(void)
 
 /*While sending the UART the values validate with the "uartGoFlag" variable and then go for it*/
 		preAvgPhases = avgPhases;
-		avgPhases = voltL1+voltL2+voltL3+voltL4/4;
+		avgPhases = ((voltL1+voltL2+voltL3)/3);
 		float avgVoltDiff = avgPhases - preAvgPhases;
 
 		if(((HAL_GetTick() - preSentTime) >= 1000) || (avgVoltDiff >= (preAvgPhases/100.0)) || (avgVoltDiff <= (-(preAvgPhases/100.0)))){
