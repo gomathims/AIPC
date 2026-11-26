@@ -111,10 +111,10 @@ uint8_t rxDummy[4],rxDataV1[4], rxDataV2[4], rxDataV3[4], rxDataV4[4];
 uint8_t rxDataC1[4], rxDataC2[4], rxDataC3[4], rxDataC4[4];
 uint8_t rxDataP1[4], rxDataP2[4], rxDataP3[4], rxDataP4[4];
 uint8_t rxDataE1[4], rxDataE2[4], rxDataE3[4], rxDataE4[4];
-volatile float  voltL1, voltL2, voltL3,voltL4;
-volatile float  curL1, curL2, curL3, curL4;
-volatile float  powL1, powL2, powL3, powL4;
-volatile float  eneL1, eneL2, eneL3, eneL4;
+ float  voltL1, voltL2, voltL3,voltL4;
+ float  curL1, curL2, curL3, curL4;
+ float  powL1, powL2, powL3, powL4;
+ float  eneL1, eneL2, eneL3, eneL4;
 
 unsigned short uartGoFlag;			//0b->v1, 1b->c1, 2b->p1, 3b->e1, 4b->v2, 5b->c2, 6b->p2, 7b->e2, 8b->v3, 9b->c3, 10b->p3, 11b->e3, 12b->v4, 13b->c4, 14b->p4, 15b->e4.
 unsigned short relayStatus;        //0b->rMainRelay, 1b->yMainRelay, 2b->bMainRelay, 3b->ryAuxRelay, 4b->yrAuxRelay, 5b->ybAuxRelay, 6b->byAuxRelay, 7b->rbAuxRelay, 8b->brAuxRelay, 9b->upsMainRelay, 10b->upsAuxRelay, 11,12,13,14,15b->NILL.
@@ -486,17 +486,22 @@ void BLdataCollectionL1(void) {
 				/ CALIB_CUR1);
 		uartGoFlag = uartGoFlag | 0X0002;
 //	  				printf("curL1 = %.3f \r\n", curL1);
-		if (curL1 < 0.03) {
+		if (curL1 <= 0.03) {
 			curL1 = 0;
-			powL1 = 0;
 		}
 
 	}
 	if (okP1) {
-		powL1 = ((rxDataP1[0] << 16 | rxDataP1[1] << 8 | rxDataP1[2])
-				/ CALIB_POW1);
+		int32_t tempPow = (rxDataP1[0] << 16 | rxDataP1[1] << 8 | rxDataP1[2]);
+		if(tempPow &  0x800000){
+			tempPow -=  0x1000000;
+		}
+		powL1  = (tempPow / CALIB_POW1);
 		uartGoFlag = uartGoFlag | 0X0004;
 //	  				printf("powL1 = %.2f \r\n", powL1);
+		if (curL1 <= 0.03) {
+			powL1 = 0;
+		}
 
 	}
 	if (okE1) {
@@ -548,17 +553,22 @@ void BLdataCollectionL2(void) {
 				/ CALIB_CUR2);
 		uartGoFlag = uartGoFlag | 0X0020;
 		//	  				printf("curL2 = %.3f \r\n", curL2);
-		if (curL2 < 0.03) {
+		if (curL2 <= 0.03) {
 			curL2 = 0;
-			powL2 = 0;
 		}
 
 	}
 	if (okP2) {
-		powL2 = ((rxDataP2[0] << 16 | rxDataP2[1] << 8 | rxDataP2[2])
-				/ CALIB_POW2);
+		int32_t tempPow = (rxDataP2[0] << 16 | rxDataP2[1] << 8 | rxDataP2[2]);
+		if(tempPow &  0x800000){
+			tempPow -=  0x1000000;
+		}
+		powL2  = (tempPow / CALIB_POW2);
 		uartGoFlag = uartGoFlag | 0X0040;
 		//	  				printf("powL2 = %.2f \r\n", powL2);
+		if (curL2 <= 0.03) {
+			powL2 = 0;
+		}
 	}
 	if (okE2) {
 		eneL2 = ((rxDataE2[0] << 16 | rxDataE2[1] << 8 | rxDataE2[2])
@@ -609,16 +619,21 @@ void BLdataCollectionL3(void) {
 				/ CALIB_CUR3);
 		uartGoFlag = uartGoFlag | 0X0200;
 //	  			printf("curL3 = %.3f \r\n", curL3);
-		if (curL3 < 0.03) {
+		if (curL3 <= 0.03) {
 			curL3 = 0;
-			powL3 = 0;
 		}
 	}
 	if (okP3) {
-		powL3 = ((rxDataP3[0] << 16 | rxDataP3[1] << 8 | rxDataP3[2])
-				/ CALIB_POW3);
+		int32_t tempPow = (rxDataP3[0] << 16 | rxDataP3[1] << 8 | rxDataP3[2]);
+		if(tempPow &  0x800000){
+			tempPow -=  0x1000000;
+		}
+		powL3  = (tempPow / CALIB_POW3);
 		uartGoFlag = uartGoFlag | 0X0400;
 //	  			printf("powL3 = %.2f \r\n", powL3);
+		if (curL3 <= 0.03) {
+			powL3 = 0;
+		}
 	}
 	if (okE3) {
 		eneL3 = ((rxDataE3[0] << 16 | rxDataE3[1] << 8 | rxDataE3[2])
@@ -665,16 +680,21 @@ void BLdataCollectionL4(void) {
 				/ CALIB_CUR4);
 		uartGoFlag = uartGoFlag | 0X2000;
 //	  			printf("curL4 = %.3f \r\n", curL4);
-		if (curL4 < 0.03) {
+		if (curL4 <= 0.03) {
 			curL4 = 0;
-			powL4 = 0;
 		}
 	}
 	if (okP4) {
-		powL4 = ((rxDataP4[0] << 16 | rxDataP4[1] << 8 | rxDataP4[2])
-				/ CALIB_POW4);
+		int32_t tempPow = (rxDataP4[0] << 16 | rxDataP4[1] << 8 | rxDataP4[2]);
+		if(tempPow &  0x800000){
+			tempPow -=  0x1000000;
+		}
+		powL4  = (tempPow / CALIB_POW4);
 		uartGoFlag = uartGoFlag | 0X4000;
 //	  			printf("powL4 = %.2f \r\n", powL4);
+		if (curL4 <= 0.04) {
+			powL4 = 0;
+		}
 	}
 	if (okE4) {
 		eneL4 = ((rxDataE4[0] << 16 | rxDataE4[1] << 8 | rxDataE4[2])
@@ -1195,6 +1215,7 @@ void feedbackHandler(){
 enum contactorStatus PhysicalFailFaultFinder() {
 
 
+	/*Implement the CT reverse direction connection by using the negative power value by the BL0939. Before this inclusion remove the safe code which is if(curL1<0.03) pow=0;*/
 	/*To do: If physical contactor feedback failed with the help of the relay and contactor feedback state should be same*/
 	
 
@@ -1406,7 +1427,7 @@ int main(void)
 
 				if (uartGoFlag & 0XFFFF) {
 					HAL_UART_Transmit(&huart3, (uint8_t*) "STM", 4, 10);
-					uint8_t transmit[60];
+					uint8_t transmit[75];
 					relayStatus = 0;
 					relayStatus |= rMainRelayState << 0;
 					relayStatus |= yMainRelayState << 1;
@@ -1419,26 +1440,26 @@ int main(void)
 					relayStatus |= brAuxRelayState << 8;
 					relayStatus |= upsMainRelayState << 9;
 					relayStatus |= upsAuxRelayState << 10;
-					memcpy(transmit, rxDataV1, 3);
-					memcpy((&transmit[3]), &rxDataV2, 3);
-					memcpy((&transmit[6]), &rxDataV3, 3);
-					memcpy((&transmit[9]), &rxDataV4,3);
-					memcpy((&transmit[12]), &rxDataC1, 3);
-					memcpy((&transmit[15]), &rxDataC2, 3);
-					memcpy((&transmit[18]), &rxDataC3, 3);
-					memcpy((&transmit[21]), &rxDataC4, 3);
-					memcpy((&transmit[24]), &rxDataP1, 3);
-					memcpy((&transmit[27]), &rxDataP2, 3);
-					memcpy((&transmit[30]), &rxDataP3, 3);
-					memcpy((&transmit[33]), &rxDataP4, 3);
-					memcpy((&transmit[36]), &rxDataE1, 3);
-					memcpy((&transmit[39]), &rxDataE2, 3);
-					memcpy((&transmit[42]), &rxDataE3, 3);
-					memcpy((&transmit[45]), &rxDataE4, 3);
-					memcpy((&transmit[48]), &relayStatus, 2);
-					memcpy((&transmit[50]), &bateryVoltage,4);
-					memcpy((&transmit[54]), &curTime,4);
-					memcpy((&transmit[58]), &contactorStatus,1);
+					memcpy(transmit, &voltL1, 4);
+					memcpy((&transmit[4]), &voltL2, 4);
+					memcpy((&transmit[8]), &voltL3, 4);
+					memcpy((&transmit[12]), &voltL4,4);
+					memcpy((&transmit[16]), &curL1, 4);
+					memcpy((&transmit[20]), &curL2, 4);
+					memcpy((&transmit[24]), &curL3, 4);
+					memcpy((&transmit[28]), &curL4, 4);
+					memcpy((&transmit[32]), &powL1, 4);
+					memcpy((&transmit[36]), &powL2, 4);
+					memcpy((&transmit[40]), &powL3, 4);
+					memcpy((&transmit[44]), &powL4, 4);
+					memcpy((&transmit[48]), &eneL1, 4);
+					memcpy((&transmit[52]), &eneL2, 4);
+					memcpy((&transmit[56]), &eneL3, 4);
+					memcpy((&transmit[60]), &eneL4, 4);
+					memcpy((&transmit[64]), &relayStatus, 2);
+					memcpy((&transmit[66]), &bateryVoltage, 4);
+					memcpy((&transmit[70]), &curTime, 4);
+					memcpy((&transmit[74]), &contactorStatus, 1);
 					HAL_UART_Transmit(&huart3, (uint8_t*) &transmit, sizeof(transmit),10);
 					uartGoFlag = 0;
 				}
