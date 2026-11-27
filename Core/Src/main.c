@@ -892,184 +892,222 @@ void overloadMonitoring(){
 
 }
 
+/*Load estimation per output phase (CTs are on the input lines L1/L2/L3)*/
+#define LOAD_HEADROOM_FACTOR  0.90f    // use at most 90% of the line's overload limit
+#define LOAD_DECAY_ALPHA      0.01f    // slow decay per loop when the load drops
+#define LOAD_SETTLE_MS        2000U    // time for a newly switched load to show up on the CT
+
+enum { OUT_R = 0, OUT_Y, OUT_B };
+enum { LINE_L1 = 0, LINE_L2, LINE_L3 };
+
+float outLoad[3];                      // estimated load of R/Y/B outputs (A)
+static float    pendingLoad[3];        // load just switched onto a line, not yet seen by its CT
+static uint32_t pendingTime[3];
+
+/* Is 'line' currently feeding 'out'? (xyAux = source line x -> output y) */
+static bool lineFeeds(uint8_t line, uint8_t out) {
+	switch (line) {
+	case LINE_L1: return (out == OUT_R) ? rMainRelayState : (out == OUT_Y) ? ryAuxRelayState : rbAuxRelayState;
+	case LINE_L2: return (out == OUT_R) ? yrAuxRelayState : (out == OUT_Y) ? yMainRelayState : ybAuxRelayState;
+	case LINE_L3: return (out == OUT_R) ? brAuxRelayState : (out == OUT_Y) ? byAuxRelayState : bMainRelayState;
+	}
+	return false;
+}
+
+static float lineCurrent(uint8_t line) {
+	return (line == LINE_L1) ? curL1 : (line == LINE_L2) ? curL2 : curL3;
+}
+
+/* Call every loop, after phaseHealthCheck() */
+void loadEstimation(void) {
+	const bool healthy[3] = { healthyRphase, healthyYphase, healthyBphase };
+
+	for (uint8_t line = 0; line < 3; line++) {
+		/* expire pending load once the CT has had time to see it */
+		if (pendingTime[line] && ((HAL_GetTick() - pendingTime[line]) >= LOAD_SETTLE_MS)) {
+			pendingLoad[line] = 0;
+			pendingTime[line] = 0;
+		}
+
+		if (!healthy[line]) continue;          // freeze: never learn from a failing line
+
+		uint8_t n = 0, only = 0;
+		for (uint8_t out = 0; out < 3; out++) {
+			if (lineFeeds(line, out)) { n++; only = out; }
+		}
+		if (n != 1) continue;                  // 0 or shared outputs: can't attribute, keep last value
+
+		float a = lineCurrent(line);
+		if (a > outLoad[only]) {
+			outLoad[only] = a;                                     // fast attack
+		} else {
+			outLoad[only] += LOAD_DECAY_ALPHA * (a - outLoad[only]);  // slow decay
+		}
+	}
+	/*End of this individual function*/
+}
+
+static float lineHeadroom(uint8_t line) {
+	return overload[line] * LOAD_HEADROOM_FACTOR - (lineCurrent(line) + pendingLoad[line]);
+}
+
+static void commitLoad(uint8_t line, float amps) {
+	pendingLoad[line] += amps;
+	pendingTime[line]  = HAL_GetTick();
+}
+
 void SwitchoverManagement(){
 	/*Switch-over Management*/
 
+	/* A line can be used as a source only if healthy AND not overloaded (CTs are on the inputs) */
+	bool l1Ok = healthyRphase && !overloadAlertL1;
+	bool l2Ok = healthyYphase && !overloadAlertL2;
+	bool l3Ok = healthyBphase && !overloadAlertL3;
+	float need;
+	bool useA, useB;
 
-					if (!healthyRphase || overloadAlertL1) {
-						if (rMainRelayState || rCfState) {
-							// Function to OFF the relay once, inside it should OFF the Aux of the R main relay
-							rMainRelayTurnOff();
-							// give some delay if not feedback
-	//						HAL_Delay(500);
+	/*---------------- R output (L1 main, L2 via yrAux, L3 via brAux) ----------------*/
+	if (overloadAlertL1) {
+		/* Input-CT overload: shed everything L1 feeds (R main + L1->Y + L1->B).
+		   yrAux/brAux don't load L1, so they are not cut for the overload. */
+		if (rMainRelayState || rCfState) {
+			rMainRelayTurnOff();
+		}
+		/* If R is on an aux, keep it only while that source is still good */
+		if (yrAuxRelayState && !l2Ok) yrAuxRelayTurnOff();
+		if (brAuxRelayState && !l3Ok) brAuxRelayTurnOff();
 
-						}else if(overloadAlertL1 && ((ryCfState || yrAuxRelayState) || (brCfState || brAuxRelayState))){
-							rIncomingAuxRelayOff();
-						}
-						if (healthyYphase && healthyBphase && !yrAuxRelayState
-								&& !brAuxRelayState && !overloadAlertL1 && !rCfState && !ryCfState && !brCfState  && !invCfState) {		//prevention condition
-							// choose any one of the phase with the help of the current
-							// with that phase ON the the Aux to the the R phase once
-							/*depends on the current Aux will switch over*/
-							if ((curL2 <= curL3) && !rCfState && !ryCfState && !brCfState  && !invCfState) {
-								yrAuxRelayTurnOn();
+	} else if (!healthyRphase) {
+		/* Voltage fault: changeover to L2/L3 */
+		if (rMainRelayState || rCfState) {
+			rMainRelayTurnOff();                // aux waits for rCf to clear
+		} else {
+			/* the source of the active aux has gone bad -> drop it, re-select next cycles */
+			if (yrAuxRelayState && !l2Ok) yrAuxRelayTurnOff();
+			if (brAuxRelayState && !l3Ok) brAuxRelayTurnOff();
 
+			if (!yrAuxRelayState && !brAuxRelayState &&
+				!rCfState && !ryCfState && !brCfState && !invCfState) {
+				need = outLoad[OUT_R];
+				useA = l2Ok && (lineHeadroom(LINE_L2) >= need);
+				useB = l3Ok && (lineHeadroom(LINE_L3) >= need);
 
-							} else if ((curL3 < curL2) && !rCfState && !ryCfState && !brCfState  && !invCfState) {
-								brAuxRelayTurnOn();
+				if (useA && (!useB || (lineHeadroom(LINE_L2) >= lineHeadroom(LINE_L3)))) {
+					yrAuxRelayTurnOn();
+					commitLoad(LINE_L2, need);
+				} else if (useB) {
+					brAuxRelayTurnOn();
+					commitLoad(LINE_L3, need);
+				}
+				/* else: no healthy line has room -> R stays off rather than tripping another line */
+			}
+		}
 
-							}
-							// else {
-							// 	yrAuxRelayTurnOn();
-							// }
-						} else if(!overloadAlertL1) {
-							if (healthyYphase && !yrAuxRelayState && !brAuxRelayState && !rCfState && !ryCfState && !brCfState  && !invCfState) {
-								// ON the Y phase Aux to the R main once
-								yrAuxRelayTurnOn();
+	} else {
+		/* healthy && !overloadAlertL1 : recovery to R main */
+		if (!rMainRelayState && !rCfState && !invCfState) {
+			if (yrAuxRelayState || brAuxRelayState || ryCfState || brCfState) {
+				// function to OFF the all Aux from other phase to R phases
+				rIncomingAuxRelayOff();
+			}
+			if ((!ryCfState && !yrAuxRelayState) && (!brCfState && !brAuxRelayState)) {
+				rMainRelayTurnOn();
+				commitLoad(LINE_L1, outLoad[OUT_R]);
+			}
+		}
+	}
 
+	/*---------------- Y output (L2 main, L1 via ryAux, L3 via byAux) ----------------*/
+	if (overloadAlertL2) {
+		if (yMainRelayState || yCfState) {
+			yMainRelayTurnOff();                // sheds Y main + L2->R + L2->B
+		}
+		if (ryAuxRelayState && !l1Ok) ryAuxRelayTurnOff();
+		if (byAuxRelayState && !l3Ok) byAuxRelayTurnOff();
 
-							} else if (healthyBphase && !yrAuxRelayState
-									&& !brAuxRelayState && !rCfState && !ryCfState && !brCfState  && !invCfState) {
-								// ON the B phase Aux to the R main once
-								brAuxRelayTurnOn();
+	} else if (!healthyYphase) {
+		if (yMainRelayState || yCfState) {
+			yMainRelayTurnOff();
+		} else {
+			if (ryAuxRelayState && !l1Ok) ryAuxRelayTurnOff();
+			if (byAuxRelayState && !l3Ok) byAuxRelayTurnOff();
 
-							} else {
-								//not to changeover the relay
-							}
-						}
+			if (!ryAuxRelayState && !byAuxRelayState &&
+				!yCfState && !ryCfState && !ybCfState && !invCfState) {
+				need = outLoad[OUT_Y];
+				useA = l1Ok && (lineHeadroom(LINE_L1) >= need);
+				useB = l3Ok && (lineHeadroom(LINE_L3) >= need);
 
-					} else if(healthyRphase && !overloadAlertL1) {
-						if (!rMainRelayState && !rCfState && !invCfState) {
-							if (yrAuxRelayState || brAuxRelayState || ryCfState || brCfState) {
-								// function to OFF the all Aux from other phase to R phases
-								rIncomingAuxRelayOff();
-	//							HAL_Delay(500);
-							}
+				if (useA && (!useB || (lineHeadroom(LINE_L1) >= lineHeadroom(LINE_L3)))) {
+					ryAuxRelayTurnOn();
+					commitLoad(LINE_L1, need);
+				} else if (useB) {
+					byAuxRelayTurnOn();
+					commitLoad(LINE_L3, need);
+				}
+				/* else: no healthy line has room -> Y stays off */
+			}
+		}
 
-							// give some delay if not feedback
-							// Turn ON the R main relay
-//							if(!ryCfState && !brCfState ){
-							if((!ryCfState && !yrAuxRelayState) && (!brCfState && !brAuxRelayState)){
-							rMainRelayTurnOn();
-							}
+	} else {
+		/* healthy && !overloadAlertL2 : recovery to Y main */
+		if (!yMainRelayState && !yCfState && !invCfState) {
+			if (ryAuxRelayState || byAuxRelayState || ryCfState || ybCfState) {
+				// function to OFF the all Aux from other phase to Y phases
+				yIncomingAuxRelayOff();
+			}
+			if ((!ryCfState && !ryAuxRelayState) && (!ybCfState && !byAuxRelayState)) {
+				yMainRelayTurnOn();
+				commitLoad(LINE_L2, outLoad[OUT_Y]);
+			}
+		}
+	}
 
-						}
+	/*---------------- B output (L3 main, L1 via rbAux, L2 via ybAux) ----------------*/
+	if (overloadAlertL3) {
+		if (bMainRelayState || bCfState) {
+			bMainRelayTurnOff();                // sheds B main + L3->R + L3->Y
+		}
+		if (rbAuxRelayState && !l1Ok) rbAuxRelayTurnOff();
+		if (ybAuxRelayState && !l2Ok) ybAuxRelayTurnOff();
 
-					}
+	} else if (!healthyBphase) {
+		if (bMainRelayState || bCfState) {
+			bMainRelayTurnOff();
+		} else {
+			if (rbAuxRelayState && !l1Ok) rbAuxRelayTurnOff();
+			if (ybAuxRelayState && !l2Ok) ybAuxRelayTurnOff();
 
-					if (!healthyYphase || overloadAlertL2) {
-						if (yMainRelayState || yCfState) {
-							// Function to OFF the relay once, inside it should OFF the Aux of the Y main relay
-							yMainRelayTurnOff();
-							// give some delay if not feedback
-	//						HAL_Delay(500);
+			if (!rbAuxRelayState && !ybAuxRelayState &&
+				!bCfState && !brCfState && !ybCfState && !invCfState) {
+				need = outLoad[OUT_B];
+				useA = l1Ok && (lineHeadroom(LINE_L1) >= need);
+				useB = l2Ok && (lineHeadroom(LINE_L2) >= need);
 
-						}else if(overloadAlertL2 &&((ryCfState || ryAuxRelayState) || (ybCfState || byAuxRelayState))){
-							yIncomingAuxRelayOff();
-						}
-						if (healthyRphase && healthyBphase && !ryAuxRelayState
-								&& !byAuxRelayState && !overloadAlertL2  && !yCfState && !ryCfState && !ybCfState  && !invCfState) { 		//prevention condition
-							// choose any one of the phase with the help of the current
-							// with that phase ON the the Aux to the the R phase once
-							/*depends on the current Aux will switch over*/
-							if ((curL1 <= curL3) && !yCfState && !ryCfState && !ybCfState  && !invCfState) {
-								ryAuxRelayTurnOn();
-							} else if ((curL3 < curL1) && !yCfState && !ryCfState && !ybCfState  && !invCfState) {
-								byAuxRelayTurnOn();
-							}
-//							else {
-//								ryAuxRelayTurnOn();
-//							}
+				if (useA && (!useB || (lineHeadroom(LINE_L1) >= lineHeadroom(LINE_L2)))) {
+					rbAuxRelayTurnOn();
+					commitLoad(LINE_L1, need);
+				} else if (useB) {
+					ybAuxRelayTurnOn();
+					commitLoad(LINE_L2, need);
+				}
+				/* else: no healthy line has room -> B stays off */
+			}
+		}
 
-						} else if(!overloadAlertL2){
-							if (healthyRphase && !ryAuxRelayState && !byAuxRelayState && !yCfState && !ryCfState && !ybCfState  && !invCfState) {
-								// ON the Y phase Aux to the R main once
-								ryAuxRelayTurnOn();
-							} else if (healthyBphase && !ryAuxRelayState
-									&& !byAuxRelayState && !yCfState && !ryCfState && !ybCfState  && !invCfState) {
-								// ON the B phase Aux to the R main once
-								byAuxRelayTurnOn();
-							} else {
-								//not to change over the relay
-							}
-
-						}
-
-					} else if(healthyYphase && !overloadAlertL2) {
-						if (!yMainRelayState && !yCfState && !invCfState) {
-							if (ryAuxRelayState || byAuxRelayState || ryCfState || ybCfState) {
-								// function to OFF the all Aux from other phase to Y phases
-								yIncomingAuxRelayOff();
-								// give some delay if not feedback
-	//							HAL_Delay(500);
-							}
-							// Turn ON the Y main relay
-//							if(!ryCfState && !ybCfState){
-							if((!ryCfState && !ryAuxRelayState) && (!ybCfState && !byAuxRelayState)){
-							yMainRelayTurnOn();
-							}
-
-
-
-						}
-					}
-
-					if (!healthyBphase || overloadAlertL3) {
-						if (bMainRelayState || bCfState) {
-							// Function to OFF the relay once, inside it should OFF the Aux of the B main relay
-							bMainRelayTurnOff();
-							// give some delay if not feedback
-	//						HAL_Delay(500);
-
-						}else if(overloadAlertL3 && ((brCfState || rbAuxRelayState) || (ybCfState || ybAuxRelayState))){
-							bIncomingAuxRelayOff();
-						}
-						if (healthyRphase && healthyYphase && !rbAuxRelayState
-								&& !ybAuxRelayState && !overloadAlertL3  && !bCfState && !brCfState && !ybCfState  && !invCfState) {		//prevention condition
-							// choose any one of the phase with the help of the current
-							// with that phase ON the the Aux to the the R phase once
-							/*depends on the current Aux will switch over*/
-							if ((curL1 <= curL2) && !bCfState && !brCfState && !ybCfState  && !invCfState) {
-								rbAuxRelayTurnOn();
-							} else if ((curL2 < curL1) && !ybAuxRelayState  && !bCfState && !brCfState && !ybCfState  && !invCfState) {
-								ybAuxRelayTurnOn();
-							}
-//							else {
-//								rbAuxRelayTurnOn();
-//							}
-
-
-						} else if(!overloadAlertL3) {
-							if (healthyRphase && !rbAuxRelayState && !ybAuxRelayState  && !bCfState && !brCfState && !ybCfState  && !invCfState) {
-								// ON the Y phase Aux to the R main once
-								rbAuxRelayTurnOn();
-							} else if (healthyYphase && !rbAuxRelayState
-									&& !ybAuxRelayState  && !bCfState && !brCfState && !ybCfState  && !invCfState) {
-								// ON the B phase Aux to the R main once
-								ybAuxRelayTurnOn();
-							} else {
-								//not to change over the relay
-							}
-
-						}
-					} else if(healthyBphase && !overloadAlertL3) {
-						if (!bMainRelayState && !bCfState && !invCfState) {
-							if (rbAuxRelayState || ybAuxRelayState || brCfState || ybCfState) {
-								// function to OFF the all Ax from other phase to B phases
-								bIncomingAuxRelayOff();
-								// give some delay if not feedback
-	//							HAL_Delay(500);
-							}
-							// Turn ON the B main relay
-//							if(!brCfState && !ybCfState){
-							if((!brCfState && !rbAuxRelayState) && (!ybCfState && !ybAuxRelayState)){
-							bMainRelayTurnOn();
-							}
-
-
-						}
-
-					}
+	} else {
+		/* healthy && !overloadAlertL3 : recovery to B main */
+		if (!bMainRelayState && !bCfState && !invCfState) {
+			if (rbAuxRelayState || ybAuxRelayState || brCfState || ybCfState) {
+				// function to OFF the all Aux from other phase to B phases
+				bIncomingAuxRelayOff();
+			}
+			if ((!brCfState && !rbAuxRelayState) && (!ybCfState && !ybAuxRelayState)) {
+				bMainRelayTurnOn();
+				commitLoad(LINE_L3, outLoad[OUT_B]);
+			}
+		}
+	}
 
 				if(healthyUPS && !overPowerAlertL4 && !overloadAlertL4 && !healthyRphase && !healthyYphase && !healthyBphase && !rMainRelayState && !yMainRelayState && !bMainRelayState && !rCfState && !yCfState && !bCfState && !ryCfState && !ybCfState && !brCfState){
 					if(!invCfState){
@@ -1369,6 +1407,8 @@ int main(void)
 	  	feedbackHandler();
 
 	  	phaseHealthCheck();
+
+	  	loadEstimation();
 
 	  	overloadMonitoring();
 
